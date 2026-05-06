@@ -1,15 +1,25 @@
-import express from "express";
-import cors from "cors";
-import routes from "./routes/index.js";
+const express = require('express');
+const morgan = require('morgan');
+const cors = require('cors');
+const helmet = require('helmet');
+const { json, urlencoded } = require('express');
+const config = require('./config/env');
+const { sequelize } = require('./config/database');
+
+const routes = require('./routes');
+const { errorHandler, notFound } = require('./middlewares/errorHandler');
 
 const app = express();
 
-// Middleware
+app.use(helmet());
 app.use(cors());
-app.use(express.json());
+app.use(morgan('dev'));
+app.use(json());
+app.use(urlencoded({ extended: true }));
 
-// Rutas
-app.use("/api", routes);
+app.use('/api', routes);
 
-export default app;
+app.use(notFound);
+app.use(errorHandler);
 
+module.exports = app;

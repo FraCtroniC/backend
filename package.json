@@ -4,8 +4,7 @@
   "description": "",
   "license": "ISC",
   "author": "",
-  "type": "module",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
@@ -14,10 +13,14 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-validator": "^7.3.2",
     "helmet": "^8.1.0",
+    "joi": "^18.2.1",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
-    "pg": "^8.20.0"
+    "pg": "^8.20.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.8"
   },
   "repository": {
     "type": "git",

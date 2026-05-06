@@ -1,25 +1,19 @@
-import express from 'express';
-import cors from 'cors';
-import morgan from 'morgan';
-import './src/config/bd.js'; // Asegúrate de que el archivo se llame bd.js o db.js
+const app = require('./src/app');
+const config = require('./src/config/env');
+const { testConnection } = require('./src/config/database');
 
-// Inicializamos la aplicación
-const app = express();
+const port = config.port || 3000;
 
-// Middlewares
-app.use(cors()); 
-app.use(morgan('dev')); 
-app.use(express.json()); 
+async function start() {
+  const ok = await testConnection();
+  if (!ok) {
+    console.error('Database connection failed. Exiting.');
+    process.exit(1);
+  }
 
-// Ruta de prueba inicial
-app.get('/', (req, res) => {
-    res.json({ mensaje: '¡El backend de uptnt manuela saenz está vivo y funcionando!' });
-});
+  app.listen(port, () => {
+    console.log(`🚀 Server listening on port ${port}`);
+  });
+}
 
-// Definimos el puerto
-const PORT = 3000;
-
-// Encendemos el servidor
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
+start();
