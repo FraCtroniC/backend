@@ -1,7 +1,81 @@
 const { PensumSubject } = require('../models');
 
-exports.list = async (req, res, next) => { try { const items = await PensumSubject.findAll(); res.json(items); } catch (err) { next(err); } };
-exports.get = async (req, res, next) => { try { const item = await PensumSubject.findByPk(req.params.id); if (!item) return res.status(404).json({ message: 'Not found' }); res.json(item); } catch (err) { next(err); } };
-exports.create = async (req, res, next) => { try { const item = await PensumSubject.create(req.body); res.status(201).json(item); } catch (err) { next(err); } };
-exports.update = async (req, res, next) => { try { const item = await PensumSubject.findByPk(req.params.id); if (!item) return res.status(404).json({ message: 'Not found' }); await item.update(req.body); res.json(item); } catch (err) { next(err); } };
-exports.remove = async (req, res, next) => { try { const item = await PensumSubject.findByPk(req.params.id); if (!item) return res.status(404).json({ message: 'Not found' }); await item.destroy(); res.status(204).end(); } catch (err) { next(err); } };
+// 1. Listar todas las materias de los pensum
+exports.list = async (req, res, next) => {
+  try {
+    // Los ordenamos por semestre para que el pensum se vea organizado
+    const items = await PensumSubject.findAll({ 
+      order: [['semester', 'ASC'], ['id_pensum', 'ASC']] 
+    });
+    res.json(items);
+  } catch (err) { 
+    next(err); 
+  }
+};
+
+// 2. Obtener una relación específica por ID
+exports.get = async (req, res, next) => {
+  try {
+    const item = await PensumSubject.findByPk(req.params.id);
+    if (!item) {
+      return res.status(404).json({ message: 'Relación Pensum-Materia no encontrada' });
+    }
+    res.json(item);
+  } catch (err) { 
+    next(err); 
+  }
+};
+
+// 3. Asignar materia a un pensum (POST)
+exports.create = async (req, res, next) => {
+  try {
+    const { id_pensum, id_subject, semester } = req.body;
+    
+    const newItem = await PensumSubject.create({ 
+      id_pensum, 
+      id_subject, 
+      semester 
+    });
+    
+    res.status(201).json(newItem);
+  } catch (err) { 
+    next(err); 
+  }
+};
+
+// 4. Actualizar semestre o materia (PUT)
+exports.update = async (req, res, next) => {
+  try {
+    const item = await PensumSubject.findByPk(req.params.id);
+    if (!item) {
+      return res.status(404).json({ message: 'Relación no encontrada' });
+    }
+
+    const { id_pensum, id_subject, semester } = req.body;
+
+    await item.update({ 
+      id_pensum, 
+      id_subject, 
+      semester 
+    });
+
+    res.json(item);
+  } catch (err) { 
+    next(err); 
+  }
+};
+
+// 5. Eliminar materia del pensum (DELETE)
+exports.remove = async (req, res, next) => {
+  try {
+    const item = await PensumSubject.findByPk(req.params.id);
+    if (!item) {
+      return res.status(404).json({ message: 'Relación no encontrada' });
+    }
+    
+    await item.destroy();
+    res.status(204).end();
+  } catch (err) { 
+    next(err); 
+  }
+};

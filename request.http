@@ -1,3 +1,51 @@
-get http://localhost:3001/api
+
 
 ###
+GET http://localhost:3000/api
+
+###
+
+POST http://localhost:3000/api/careers
+Content-Type: application/json
+
+{
+  "code_career": "PRUEBA",
+  "name_career": "Carrera de Prueba",
+  "total_semesters": 8
+}
+
+###
+
+GET http://localhost:3000/api/careers
+
+###
+
+GET http://localhost:3000/api/careers/1
+
+###
+
+PUT http://localhost:3000/api/careers/1
+Content-Type: application/json
+
+{
+  "name_career": "Carrera Actualizada"
+}
+
+###
+
+DELETE http://localhost:3000/api/careers/1
+
+###
+
+GET http://localhost:3000/api/users
+
+###
+
+POST http://localhost:3000/api/users
+Content-Type: application/json
+
+{
+  "username": "usuario1",
+  "name": "Usuario Uno",
+  "password": "secret"
+}
