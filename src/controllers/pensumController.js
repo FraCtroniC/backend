@@ -1,3 +1,4 @@
+/** Controlador REST de pensums. */
 const { Pensum } = require('../models');
 
 // 1. Listar todos los pensum

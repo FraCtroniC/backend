@@ -1,3 +1,4 @@
+/** Modelo Sequelize de materias. */
 module.exports = (sequelize, DataTypes) => {
   const Subject = sequelize.define('Subject', {
     id_subject: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

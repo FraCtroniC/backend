@@ -1,3 +1,4 @@
+/** Modelo Sequelize de inscripciones. */
 module.exports = (sequelize, DataTypes) => {
   const Registration = sequelize.define('Registration', {
     id_registration: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

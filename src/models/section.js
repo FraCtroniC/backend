@@ -1,3 +1,4 @@
+/** Modelo Sequelize de secciones. */
 module.exports = (sequelize, DataTypes) => {
   const Section = sequelize.define('Section', {
     id_section: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

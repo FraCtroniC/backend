@@ -1,6 +1,7 @@
-const app = require('./src/app');
-const config = require('./src/config/env');
-const { testConnection } = require('./src/config/database');
+const path = require('path');
+const app = require(path.join(__dirname, 'app'));
+const config = require(path.join(__dirname, 'config', 'env'));
+const { testConnection } = require(path.join(__dirname, 'config', 'database'));
 
 const port = config.port || 3000;
 

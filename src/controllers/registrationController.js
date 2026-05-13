@@ -1,3 +1,4 @@
+/** Controlador REST de inscripciones. */
 const { Registration } = require('../models');
 
 // 1. Listar todas las inscripciones

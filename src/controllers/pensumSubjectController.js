@@ -1,3 +1,4 @@
+/** Controlador REST de materias por pensum. */
 const { PensumSubject } = require('../models');
 
 // 1. Listar todas las materias de los pensum

@@ -1,3 +1,4 @@
+/** Controlador REST de secciones. */
 const { Section } = require('../models');
 
 // 1. Listar todas las secciones

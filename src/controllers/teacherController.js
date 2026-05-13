@@ -1,3 +1,4 @@
+/** Controlador REST de docentes. */
 const { Teacher } = require('../models');
 
 // 1. Listar todos los profesores

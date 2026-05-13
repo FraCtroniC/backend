@@ -1,3 +1,4 @@
+/** Controlador REST de detalles de inscripcion. */
 const { RegistrationDetail } = require('../models');
 
 // 1. Listar todos los detalles de inscripción (Notas)

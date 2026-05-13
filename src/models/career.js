@@ -1,3 +1,4 @@
+/** Modelo Sequelize de carreras. */
 module.exports = (sequelize, DataTypes) => {
   const Career = sequelize.define('Career', {
     id_career: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

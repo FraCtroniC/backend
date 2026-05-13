@@ -1,3 +1,4 @@
+/** Modelo Sequelize de auditoria. */
 module.exports = (sequelize, DataTypes) => {
   const AuditLog = sequelize.define('AuditLog', {
     id_log: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },

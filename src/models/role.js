@@ -1,3 +1,4 @@
+/** Modelo Sequelize de roles. */
 module.exports = (sequelize, DataTypes) => {
   const Role = sequelize.define('Role', {
     id_role: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

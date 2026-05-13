@@ -1,3 +1,4 @@
+/** Controlador REST de periodos academicos. */
 const { AcademicPeriod } = require('../models');
 
 // 1. Listar todos los periodos (ordenados por fecha de inicio)

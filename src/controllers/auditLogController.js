@@ -1,3 +1,4 @@
+/** Controlador REST de registros de auditoria. */
 const { AuditLog } = require('../models');
 
 // 1. Listar todos los logs (Historial de cambios)

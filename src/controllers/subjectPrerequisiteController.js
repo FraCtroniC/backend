@@ -1,3 +1,4 @@
+/** Controlador REST de prerrequisitos de materias. */
 const { SubjectPrerequisite } = require('../models');
 
 // 1. Listar todas las prelaciones

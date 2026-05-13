@@ -1,3 +1,4 @@
+/** Controlador REST de estudiantes. */
 const { Student } = require('../models');
 
 // 1. Listar todos los estudiantes

@@ -1,3 +1,4 @@
+/** Controlador REST de usuarios. */
 const { User } = require('../models');
 
 // 1. Listar todos los usuarios (máximo 50)

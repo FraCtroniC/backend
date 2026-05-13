@@ -1,3 +1,4 @@
+/** Controlador REST de materias. */
 const { Subject } = require('../models');
 
 // 1. Listar todas las materias

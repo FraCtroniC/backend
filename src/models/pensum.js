@@ -1,3 +1,4 @@
+/** Modelo Sequelize de pensums. */
 module.exports = (sequelize, DataTypes) => {
   const Pensum = sequelize.define('Pensum', {
     id_pensum: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

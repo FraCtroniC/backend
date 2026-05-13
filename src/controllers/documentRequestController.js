@@ -1,3 +1,4 @@
+/** Controlador REST de solicitudes de documentos. */
 const { DocumentRequest } = require('../models');
 
 // 1. Listar todas las solicitudes de documentos

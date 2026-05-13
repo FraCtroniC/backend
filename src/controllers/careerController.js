@@ -1,3 +1,4 @@
+/** Controlador REST de carreras. */
 const { Career } = require('../models');
 
 // 1. Listar todas las carreras

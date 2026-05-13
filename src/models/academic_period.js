@@ -1,3 +1,4 @@
+/** Modelo Sequelize de periodos academicos. */
 module.exports = (sequelize, DataTypes) => {
   const AcademicPeriod = sequelize.define('AcademicPeriod', {
     id_period: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

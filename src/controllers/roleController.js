@@ -1,3 +1,4 @@
+/** Controlador REST de roles. */
 const { Role } = require('../models');
 
 // 1. Listar todos los roles

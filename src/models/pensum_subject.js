@@ -1,3 +1,4 @@
+/** Modelo Sequelize de materias por pensum. */
 module.exports = (sequelize, DataTypes) => {
   const PensumSubject = sequelize.define('PensumSubject', {
     id_pensum_subject: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

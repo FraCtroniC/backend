@@ -1,3 +1,4 @@
+/** Modelo Sequelize de usuarios. */
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     id_user: {

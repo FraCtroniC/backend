@@ -1,3 +1,4 @@
+/** Modelo Sequelize de estudiantes. */
 module.exports = (sequelize, DataTypes) => {
   const Student = sequelize.define('Student', {
     id_student: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

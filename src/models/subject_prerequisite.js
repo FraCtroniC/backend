@@ -1,3 +1,4 @@
+/** Modelo Sequelize de prerrequisitos de materias. */
 module.exports = (sequelize, DataTypes) => {
   const SubjectPrerequisite = sequelize.define('SubjectPrerequisite', {
     id_prerequisite: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

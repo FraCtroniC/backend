@@ -1,3 +1,4 @@
+/** Modelo Sequelize de solicitudes de documentos. */
 module.exports = (sequelize, DataTypes) => {
   const DocumentRequest = sequelize.define('DocumentRequest', {
     id_request: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
