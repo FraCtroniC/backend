@@ -11,6 +11,93 @@
       "value": "http://localhost:3000/api"
     }
   ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const requestName = pm.info.requestName;",
+          "const method = pm.request.method;",
+          "const expectedStatus = requestName.startsWith('Delete ') ? 204 : (method === 'POST' ? 201 : 200);",
+          "pm.test(requestName + ' responde con el estado esperado', function () {",
+          "  pm.expect(pm.response.code).to.eql(expectedStatus);",
+          "});",
+          "if (expectedStatus !== 204) {",
+          "const rawBody = pm.response.text();",
+          "pm.test(requestName + ' devuelve JSON valido', function () {",
+          "  pm.expect(rawBody).to.not.be.empty;",
+          "});",
+          "let data;",
+          "try {",
+          "  data = pm.response.json();",
+          "} catch (error) {",
+          "  pm.test(requestName + ' parsea como JSON', function () {",
+          "    throw error;",
+          "  });",
+          "}",
+          "if (Array.isArray(data)) {",
+          "  pm.test(requestName + ' devuelve una lista', function () {",
+          "    pm.expect(data).to.be.an('array');",
+          "  });",
+          "}",
+          "switch (requestName) {",
+          "  case 'Create role':",
+          "    if (data.id_role !== undefined) pm.environment.set('id_role', data.id_role);",
+          "    break;",
+          "  case 'Create user':",
+          "    if (data.id_user !== undefined) pm.environment.set('id_user', data.id_user);",
+          "    break;",
+          "  case 'Create career':",
+          "    if (data.id_career !== undefined) pm.environment.set('id_career', data.id_career);",
+          "    break;",
+          "  case 'Create subject':",
+          "    if (data.id_subject !== undefined) pm.environment.set('id_subject', data.id_subject);",
+          "    break;",
+          "  case 'Create period':",
+          "    if (data.id_period !== undefined) pm.environment.set('id_period', data.id_period);",
+          "    break;",
+          "  case 'Create teacher':",
+          "    if (data.id_teacher !== undefined) pm.environment.set('id_teacher', data.id_teacher);",
+          "    break;",
+          "  case 'Create student':",
+          "    if (data.id_student !== undefined) pm.environment.set('id_student', data.id_student);",
+          "    break;",
+          "  case 'Create section':",
+          "    if (data.id_section !== undefined) pm.environment.set('id_section', data.id_section);",
+          "    break;",
+          "  case 'Create registration':",
+          "    if (data.id_registration !== undefined) pm.environment.set('id_registration', data.id_registration);",
+          "    break;",
+          "  case 'Create registration detail':",
+          "    if (data.id_detail !== undefined) pm.environment.set('id_registration_detail', data.id_detail);",
+          "    break;",
+          "  case 'Create pensum':",
+          "    if (data.id_pensum !== undefined) pm.environment.set('id_pensum', data.id_pensum);",
+          "    break;",
+          "  case 'Create pensum subject':",
+          "    if (data.id_pensum_subject !== undefined) pm.environment.set('id_pensum_subject', data.id_pensum_subject);",
+          "    break;",
+          "  case 'Create prerequisite':",
+          "    if (data.id_prerequisite !== undefined) pm.environment.set('id_prerequisite', data.id_prerequisite);",
+          "    break;",
+          "  case 'Create audit log':",
+          "    if (data.id_log !== undefined) pm.environment.set('id_audit_log', data.id_log);",
+          "    break;",
+          "  case 'Create document request':",
+          "    if (data.id_request !== undefined) pm.environment.set('id_document_request', data.id_request);",
+          "    break;",
+          "}",
+          "if (requestName.startsWith('List ')) {",
+          "  pm.test(requestName + ' retorna un arreglo', function () {",
+          "    pm.expect(data).to.be.an('array');",
+          "  });",
+          "}",
+          "}"
+        ]
+      }
+    }
+  ],
   "item": [
     {
       "name": "Health",
@@ -31,7 +118,7 @@
       "item": [
         {"name":"List users","request":{"method":"GET","header":[],"url":"{{baseUrl}}/users"},"response":[]},
         {"name":"Get user by id","request":{"method":"GET","header":[],"url":"{{baseUrl}}/users/:id"},"response":[]},
-        {"name":"Create user","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_role\": 1,\n  \"document_id\": \"V-12345678\",\n  \"username\": \"jdoe\",\n  \"password_hash\": \"hashed-password\",\n  \"name\": \"Juan\",\n  \"lastname\": \"Doe\",\n  \"email\": \"juan@example.com\",\n  \"status\": \"Activo\"\n}"},"url":"{{baseUrl}}/users"},"response":[]},
+        {"name":"Create user","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_role\": {{id_role}},\n  \"document_id\": \"V-12345678\",\n  \"username\": \"jdoe\",\n  \"password_hash\": \"hashed-password\",\n  \"name\": \"Juan\",\n  \"lastname\": \"Doe\",\n  \"email\": \"juan@example.com\",\n  \"status\": \"Activo\"\n}"},"url":"{{baseUrl}}/users"},"response":[]},
         {"name":"Update user","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_role\": 1,\n  \"username\": \"jdoe\",\n  \"password_hash\": \"new-hash\",\n  \"name\": \"Juan\",\n  \"lastname\": \"Doe\",\n  \"email\": \"juan@example.com\",\n  \"status\": \"Activo\"\n}"},"url":"{{baseUrl}}/users/:id"},"response":[]},
         {"name":"Delete user","request":{"method":"DELETE","header":[],"url":"{{baseUrl}}/users/:id"},"response":[]}
       ]
@@ -71,7 +158,7 @@
       "item": [
         {"name":"List students","request":{"method":"GET","header":[],"url":"{{baseUrl}}/students"},"response":[]},
         {"name":"Get student by id","request":{"method":"GET","header":[],"url":"{{baseUrl}}/students/:id"},"response":[]},
-        {"name":"Create student","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_user\": \"00000000-0000-0000-0000-000000000000\",\n  \"id_career\": 1,\n  \"current_semester\": 1,\n  \"status\": \"Regular\",\n  \"admission_date\": \"2026-05-12\"\n}"},"url":"{{baseUrl}}/students"},"response":[]},
+        {"name":"Create student","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_user\": \"{{id_user}}\",\n  \"id_career\": {{id_career}},\n  \"current_semester\": 1,\n  \"status\": \"{{defaultStatusStudent}}\",\n  \"admission_date\": \"2026-05-12\"\n}"},"url":"{{baseUrl}}/students"},"response":[]},
         {"name":"Update student","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_career\": 1,\n  \"current_semester\": 2,\n  \"status\": \"Regular\",\n  \"admission_date\": \"2026-05-12\"\n}"},"url":"{{baseUrl}}/students/:id"},"response":[]},
         {"name":"Delete student","request":{"method":"DELETE","header":[],"url":"{{baseUrl}}/students/:id"},"response":[]}
       ]
@@ -81,7 +168,7 @@
       "item": [
         {"name":"List teachers","request":{"method":"GET","header":[],"url":"{{baseUrl}}/teachers"},"response":[]},
         {"name":"Get teacher by id","request":{"method":"GET","header":[],"url":"{{baseUrl}}/teachers/:id"},"response":[]},
-        {"name":"Create teacher","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_user\": \"00000000-0000-0000-0000-000000000000\",\n  \"academic_grade\": \"Magister\",\n  \"profession\": \"Ingeniero en Sistemas\"\n}"},"url":"{{baseUrl}}/teachers"},"response":[]},
+        {"name":"Create teacher","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_user\": \"{{id_user}}\",\n  \"academic_grade\": \"Magister\",\n  \"profession\": \"Ingeniero en Sistemas\"\n}"},"url":"{{baseUrl}}/teachers"},"response":[]},
         {"name":"Update teacher","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"academic_grade\": \"Magister\",\n  \"profession\": \"Ingeniero en Sistemas\"\n}"},"url":"{{baseUrl}}/teachers/:id"},"response":[]},
         {"name":"Delete teacher","request":{"method":"DELETE","header":[],"url":"{{baseUrl}}/teachers/:id"},"response":[]}
       ]
@@ -91,7 +178,7 @@
       "item": [
         {"name":"List registrations","request":{"method":"GET","header":[],"url":"{{baseUrl}}/registrations"},"response":[]},
         {"name":"Get registration by id","request":{"method":"GET","header":[],"url":"{{baseUrl}}/registrations/:id"},"response":[]},
-        {"name":"Create registration","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_student\": 1,\n  \"id_period\": 1,\n  \"status\": \"Inscrito\"\n}"},"url":"{{baseUrl}}/registrations"},"response":[]},
+        {"name":"Create registration","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_student\": {{id_student}},\n  \"id_period\": {{id_period}},\n  \"status\": \"{{defaultStatusRegistration}}\"\n}"},"url":"{{baseUrl}}/registrations"},"response":[]},
         {"name":"Update registration","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_student\": 1,\n  \"id_period\": 1,\n  \"status\": \"Inscrito\"\n}"},"url":"{{baseUrl}}/registrations/:id"},"response":[]},
         {"name":"Delete registration","request":{"method":"DELETE","header":[],"url":"{{baseUrl}}/registrations/:id"},"response":[]}
       ]
@@ -101,7 +188,7 @@
       "item": [
         {"name":"List registration details","request":{"method":"GET","header":[],"url":"{{baseUrl}}/registration-details"},"response":[]},
         {"name":"Get registration detail by id","request":{"method":"GET","header":[],"url":"{{baseUrl}}/registration-details/:id"},"response":[]},
-        {"name":"Create registration detail","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_registration\": 1,\n  \"id_section\": 1,\n  \"corte_1\": 0,\n  \"corte_2\": 0,\n  \"corte_3\": 0,\n  \"corte_4\": 0,\n  \"recuperatorio\": 0,\n  \"final_note\": 0,\n  \"attendance_percentage\": 100,\n  \"subject_status\": \"Cursando\"\n}"},"url":"{{baseUrl}}/registration-details"},"response":[]},
+        {"name":"Create registration detail","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_registration\": {{id_registration}},\n  \"id_section\": {{id_section}},\n  \"corte_1\": 0,\n  \"corte_2\": 0,\n  \"corte_3\": 0,\n  \"corte_4\": 0,\n  \"recuperatorio\": 0,\n  \"final_note\": 0,\n  \"attendance_percentage\": 100,\n  \"subject_status\": \"{{defaultStatusSubject}}\"\n}"},"url":"{{baseUrl}}/registration-details"},"response":[]},
         {"name":"Update registration detail","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"corte_1\": 15.5,\n  \"corte_2\": 16.0,\n  \"corte_3\": 17.0,\n  \"corte_4\": 18.0,\n  \"recuperatorio\": 0,\n  \"final_note\": 16.625,\n  \"attendance_percentage\": 95,\n  \"subject_status\": \"Aprobado\"\n}"},"url":"{{baseUrl}}/registration-details/:id"},"response":[]},
         {"name":"Delete registration detail","request":{"method":"DELETE","header":[],"url":"{{baseUrl}}/registration-details/:id"},"response":[]}
       ]
@@ -111,7 +198,7 @@
       "item": [
         {"name":"List pensums","request":{"method":"GET","header":[],"url":"{{baseUrl}}/pensums"},"response":[]},
         {"name":"Get pensum by id","request":{"method":"GET","header":[],"url":"{{baseUrl}}/pensums/:id"},"response":[]},
-        {"name":"Create pensum","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_career\": 1,\n  \"name_pensum\": \"Pensum 2026\",\n  \"resolution_date\": \"2026-05-12\",\n  \"is_active\": true\n}"},"url":"{{baseUrl}}/pensums"},"response":[]},
+        {"name":"Create pensum","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_career\": {{id_career}},\n  \"name_pensum\": \"Pensum 2026\",\n  \"resolution_date\": \"2026-05-12\",\n  \"is_active\": true\n}"},"url":"{{baseUrl}}/pensums"},"response":[]},
         {"name":"Update pensum","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_career\": 1,\n  \"name_pensum\": \"Pensum 2026\",\n  \"is_active\": true\n}"},"url":"{{baseUrl}}/pensums/:id"},"response":[]},
         {"name":"Delete pensum","request":{"method":"DELETE","header":[],"url":"{{baseUrl}}/pensums/:id"},"response":[]}
       ]
@@ -121,7 +208,7 @@
       "item": [
         {"name":"List pensum subjects","request":{"method":"GET","header":[],"url":"{{baseUrl}}/pensum-subjects"},"response":[]},
         {"name":"Get pensum subject by id","request":{"method":"GET","header":[],"url":"{{baseUrl}}/pensum-subjects/:id"},"response":[]},
-        {"name":"Create pensum subject","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_pensum\": 1,\n  \"id_subject\": 1,\n  \"semester\": 1\n}"},"url":"{{baseUrl}}/pensum-subjects"},"response":[]},
+        {"name":"Create pensum subject","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_pensum\": {{id_pensum}},\n  \"id_subject\": {{id_subject}},\n  \"semester\": 1\n}"},"url":"{{baseUrl}}/pensum-subjects"},"response":[]},
         {"name":"Update pensum subject","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_pensum\": 1,\n  \"id_subject\": 1,\n  \"semester\": 2\n}"},"url":"{{baseUrl}}/pensum-subjects/:id"},"response":[]},
         {"name":"Delete pensum subject","request":{"method":"DELETE","header":[],"url":"{{baseUrl}}/pensum-subjects/:id"},"response":[]}
       ]
@@ -131,7 +218,7 @@
       "item": [
         {"name":"List prerequisites","request":{"method":"GET","header":[],"url":"{{baseUrl}}/prerequisites"},"response":[]},
         {"name":"Get prerequisite by id","request":{"method":"GET","header":[],"url":"{{baseUrl}}/prerequisites/:id"},"response":[]},
-        {"name":"Create prerequisite","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_pensum_subject\": 1,\n  \"id_required_pensum_subject\": 2\n}"},"url":"{{baseUrl}}/prerequisites"},"response":[]},
+        {"name":"Create prerequisite","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_pensum_subject\": {{id_pensum_subject}},\n  \"id_required_pensum_subject\": {{id_required_pensum_subject}}\n}"},"url":"{{baseUrl}}/prerequisites"},"response":[]},
         {"name":"Update prerequisite","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_pensum_subject\": 1,\n  \"id_required_pensum_subject\": 2\n}"},"url":"{{baseUrl}}/prerequisites/:id"},"response":[]},
         {"name":"Delete prerequisite","request":{"method":"DELETE","header":[],"url":"{{baseUrl}}/prerequisites/:id"},"response":[]}
       ]
@@ -161,7 +248,7 @@
       "item": [
         {"name":"List audit logs","request":{"method":"GET","header":[],"url":"{{baseUrl}}/audit-logs"},"response":[]},
         {"name":"Get audit log by id","request":{"method":"GET","header":[],"url":"{{baseUrl}}/audit-logs/:id"},"response":[]},
-        {"name":"Create audit log","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_user\": \"00000000-0000-0000-0000-000000000000\",\n  \"action\": \"INSERT\",\n  \"table_affected\": \"student\",\n  \"record_id\": \"1\",\n  \"old_value\": null,\n  \"new_value\": \"{\\\"status\\\":\\\"Regular\\\"}\"\n}"},"url":"{{baseUrl}}/audit-logs"},"response":[]}
+        {"name":"Create audit log","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_user\": \"{{id_user}}\",\n  \"action\": \"INSERT\",\n  \"table_affected\": \"student\",\n  \"record_id\": \"{{id_student}}\",\n  \"old_value\": null,\n  \"new_value\": \"{\\\"status\\\":\\\"Regular\\\"}\"\n}"},"url":"{{baseUrl}}/audit-logs"},"response":[]}
       ]
     },
     {
@@ -169,7 +256,7 @@
       "item": [
         {"name":"List document requests","request":{"method":"GET","header":[],"url":"{{baseUrl}}/document-requests"},"response":[]},
         {"name":"Get document request by id","request":{"method":"GET","header":[],"url":"{{baseUrl}}/document-requests/:id"},"response":[]},
-        {"name":"Create document request","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_student\": 1,\n  \"document_type\": \"Constancia de estudio\"\n}"},"url":"{{baseUrl}}/document-requests"},"response":[]},
+        {"name":"Create document request","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"id_student\": {{id_student}},\n  \"document_type\": \"Constancia de estudio\"\n}"},"url":"{{baseUrl}}/document-requests"},"response":[]},
         {"name":"Update document request","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"status\": \"Generado\",\n  \"hash_verification\": \"abc123\"\n}"},"url":"{{baseUrl}}/document-requests/:id"},"response":[]},
         {"name":"Delete document request","request":{"method":"DELETE","header":[],"url":"{{baseUrl}}/document-requests/:id"},"response":[]}
       ]
