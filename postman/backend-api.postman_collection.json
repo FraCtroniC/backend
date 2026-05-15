@@ -114,6 +114,77 @@
       ]
     },
     {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{"key":"Content-Type","value":"application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_role\": 1,\n  \"document_id\": \"V-12345678\",\n  \"username\": \"jdoe\",\n  \"password\": \"Secret123\",\n  \"name\": \"Juan\",\n  \"lastname\": \"Doe\",\n  \"email\": \"juan@example.com\",\n  \"status\": \"Activo\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{"key":"Content-Type","value":"application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"jdoe\",\n  \"password\": \"Secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "response": []
+        },
+        {
+          "name": "Issue token",
+          "request": {
+            "method": "POST",
+            "header": [{"key":"Content-Type","value":"application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sub\": \"00000000-0000-0000-0000-000000000000\",\n  \"role\": \"admin\",\n  \"expiresIn\": \"1h\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/token"
+          },
+          "response": []
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{accessToken}}"}
+            ],
+            "url": "{{baseUrl}}/auth/me"
+          },
+          "response": []
+        },
+        {
+          "name": "Change password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key":"Content-Type","value":"application/json"},
+              {"key":"Authorization","value":"Bearer {{accessToken}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Secret123\",\n  \"newPassword\": \"Secret456\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/change-password"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Users",
       "item": [
         {"name":"List users","request":{"method":"GET","header":[],"url":"{{baseUrl}}/users"},"response":[]},

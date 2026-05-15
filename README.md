@@ -83,6 +83,7 @@ La API se expone bajo `/api`.
 
 ## Documentacion
 
+- [Autenticacion y seguridad](Docs/Auth.md)
 - [Arquitectura](Docs/Architecture.md)
 - [Setup](Docs/Setup.md)
 - [API](Docs/API.md)

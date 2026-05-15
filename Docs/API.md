@@ -23,6 +23,67 @@ Respuesta esperada:
 { "status": "ok", "timestamp": "2026-05-12T00:00:00.000Z" }
 ```
 
+## Autenticacion
+
+La ruta base de autenticacion es `/api/auth`.
+
+### Registro
+
+- `POST /auth/register`
+
+Comportamiento:
+
+- Valida el payload con `zod`.
+- Hashea la clave con `crypto.pbkdf2Sync`.
+- Crea el usuario.
+- Devuelve `token_type`, `access_token`, `expires_in` y el objeto `user` sin `password_hash`.
+
+Campos principales: `id_role`, `document_id`, `username`, `password`, `name`, `lastname`, `email`, `status`.
+
+### Login
+
+- `POST /auth/login`
+
+Comportamiento:
+
+- Valida el payload con `zod`.
+- Busca el usuario por `username`.
+- Verifica la clave con `crypto.pbkdf2Sync` y `crypto.timingSafeEqual`.
+- Devuelve un token Bearer y el usuario autenticado.
+
+Campos principales: `username`, `password`.
+
+### Emision manual de token
+
+- `POST /auth/token`
+
+Comportamiento:
+
+- Permite firmar un token a partir de un `sub`, un `role` opcional y un `expiresIn` opcional.
+
+Campos principales: `sub`, `role`, `expiresIn`.
+
+### Perfil autenticado
+
+- `GET /auth/me`
+
+Comportamiento:
+
+- Requiere un header `Authorization: Bearer <token>`.
+- Devuelve el payload autenticado en `req.auth`.
+
+### Cambio de contrasena
+
+- `POST /auth/change-password`
+
+Comportamiento:
+
+- Requiere autenticacion.
+- Valida `currentPassword` y `newPassword`.
+- Verifica la contrasena actual y actualiza `password_hash` con un nuevo hash PBKDF2.
+
+Campos principales: `currentPassword`, `newPassword`.
+
 ## Recursos
 
 ### Usuarios
@@ -34,6 +95,8 @@ Respuesta esperada:
 - `DELETE /users/:id`
 
 Campos principales: `id_role`, `document_id`, `username`, `password_hash`, `name`, `lastname`, `email`, `status`.
+
+Nota: el CRUD de `users` mantiene compatibilidad administrativa con `password_hash`, mientras que el flujo recomendado para usuarios finales es `auth/register` y `auth/change-password`.
 
 ### Carreras
 

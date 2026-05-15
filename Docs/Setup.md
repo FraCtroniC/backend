@@ -20,6 +20,7 @@
 | `DB_PASS_LOCAL` | Si `DB_ENV=local` | Clave de la base local. |
 | `DB_URI_REMOTE` | Si `DB_ENV=remote` | URI unica de conexion remota. |
 | `JWT_SECRET` | No | Secreto de firma para tokens. |
+| `JWT_EXPIRES_IN` | No | Vigencia del token, por ejemplo `1h`. |
 
 ## Configuracion local
 
@@ -48,6 +49,7 @@ npm start
 
 - Revisar la consola para confirmar `Database connection has been established successfully`.
 - Consultar `GET /api` y confirmar una respuesta con `status: ok`.
+- Probar `POST /api/auth/login` o `POST /api/auth/register` para verificar validacion con `zod`, hashing y JWT.
 
 ## Problemas comunes
 
