@@ -3,7 +3,7 @@ const { User } = require('../models');
 
 function toSafeUser(userInstance) {
   const user = userInstance.get({ plain: true });
-  delete user.password_hash;
+  //delete user.password_hash;
   return user;
 }
 
