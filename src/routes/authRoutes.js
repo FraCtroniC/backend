@@ -4,11 +4,22 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const { validateZod } = require('../middlewares/validateZod');
 const { requireAuth } = require('../middlewares/authMiddleware');
-const { tokenIssueSchema, authRegisterSchema, authLoginSchema } = require('../validators/domainSchemas');
+const {
+  tokenIssueSchema,
+  authRegisterSchema,
+  authLoginSchema,
+  changePasswordSchema,
+} = require('../validators/domainSchemas');
 
 router.post('/register', validateZod({ body: authRegisterSchema }), authController.register);
 router.post('/login', validateZod({ body: authLoginSchema }), authController.login);
 router.post('/token', validateZod({ body: tokenIssueSchema }), authController.issueToken);
 router.get('/me', requireAuth, authController.me);
+router.post(
+  '/change-password',
+  requireAuth,
+  validateZod({ body: changePasswordSchema }),
+  authController.changePassword
+);
 
 module.exports = router;

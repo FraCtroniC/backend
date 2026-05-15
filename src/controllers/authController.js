@@ -122,9 +122,37 @@ function me(req, res) {
   });
 }
 
+async function changePassword(req, res, next) {
+  try {
+    const userId = req.auth.sub; // Extraído del token por requireAuth
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // 1. Verificar si la contraseña actual es correcta
+    const isValid = verifyPassword(currentPassword, user.password_hash);
+    if (!isValid) {
+      return res.status(400).json({ message: 'La contraseña actual es incorrecta' });
+    }
+
+    // 2. Hashear la nueva contraseña y actualizar
+    await user.update({
+      password_hash: hashPassword(newPassword),
+    });
+
+    return res.json({ message: 'Contraseña actualizada con éxito' });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   register,
   login,
   issueToken,
   me,
+  changePassword,
 };
