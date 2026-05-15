@@ -17,6 +17,7 @@ const schema = Joi.object({
   DB_URI_REMOTE: Joi.string().when('DB_ENV', { is: 'remote', then: Joi.required() }),
 
   JWT_SECRET: Joi.string().default('change_me'),
+  JWT_EXPIRES_IN: Joi.string().default('1h'),
 }).unknown();
 
 const { value: envVars, error } = schema.validate(process.env);
@@ -41,4 +42,5 @@ module.exports = {
     remoteUri: envVars.DB_URI_REMOTE,
   },
   jwtSecret: envVars.JWT_SECRET,
+  jwtExpiresIn: envVars.JWT_EXPIRES_IN,
 };

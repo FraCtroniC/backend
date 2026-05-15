@@ -1,6 +1,27 @@
 /** Controlador REST de prerrequisitos de materias. */
 const { SubjectPrerequisite } = require('../models');
 
+function buildCreatePayload(body) {
+    return {
+        id_pensum_subject: body.id_pensum_subject ?? body.id_subject,
+        id_required_pensum_subject: body.id_required_pensum_subject ?? body.id_prerequisite_subject,
+    };
+}
+
+function buildUpdatePayload(body) {
+    const payload = {};
+
+    if (body.id_pensum_subject !== undefined || body.id_subject !== undefined) {
+        payload.id_pensum_subject = body.id_pensum_subject ?? body.id_subject;
+    }
+
+    if (body.id_required_pensum_subject !== undefined || body.id_prerequisite_subject !== undefined) {
+        payload.id_required_pensum_subject = body.id_required_pensum_subject ?? body.id_prerequisite_subject;
+    }
+
+    return payload;
+}
+
 // 1. Listar todas las prelaciones
 exports.list = async (req, res, next) => {
     try {
@@ -27,14 +48,8 @@ exports.get = async (req, res, next) => {
 // 3. Crear una nueva prelación (POST)
 exports.create = async (req, res, next) => {
     try {
-        // Extraemos los IDs de las materias involucradas
-        const { id_subject, id_prerequisite_subject, type } = req.body;
-
-        const newPrerequisite = await SubjectPrerequisite.create({ 
-            id_subject, 
-            id_prerequisite_subject, 
-            type 
-        });
+        const payload = buildCreatePayload(req.body);
+        const newPrerequisite = await SubjectPrerequisite.create(payload);
 
         res.status(201).json(newPrerequisite);
     } catch (err) {
@@ -50,13 +65,9 @@ exports.update = async (req, res, next) => {
             return res.status(404).json({ message: 'Prelación no encontrada' });
         }
 
-        const { id_subject, id_prerequisite_subject, type } = req.body;
+        const payload = buildUpdatePayload(req.body);
 
-        await prerequisite.update({ 
-            id_subject, 
-            id_prerequisite_subject, 
-            type 
-        });
+        await prerequisite.update(payload);
 
         res.json(prerequisite);
     } catch (err) {

@@ -14,7 +14,7 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(morgan('dev'));
-app.use(json());
+app.use(json({ limit: '1mb', strict: true }));
 app.use(urlencoded({ extended: true }));
 
 app.use('/api', routes);

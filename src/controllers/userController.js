@@ -1,11 +1,17 @@
 /** Controlador REST de usuarios. */
 const { User } = require('../models');
 
+function toSafeUser(userInstance) {
+  const user = userInstance.get({ plain: true });
+  delete user.password_hash;
+  return user;
+}
+
 // 1. Listar todos los usuarios (máximo 50)
 exports.list = async (req, res, next) => {
   try {
     const users = await User.findAll({ limit: 50 });
-    res.json(users);
+    res.json(users.map(toSafeUser));
   } catch (err) {
     next(err);
   }
@@ -18,7 +24,7 @@ exports.get = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
-    res.json(user);
+    res.json(toSafeUser(user));
   } catch (err) {
     next(err);
   }
@@ -32,13 +38,13 @@ exports.create = async (req, res, next) => {
         id_role, 
         document_id, 
         username, 
-        password_hash, 
+        password_hash,
         name, 
         lastname, 
         email, 
         status 
     });
-    res.status(201).json(user);
+    res.status(201).json(toSafeUser(user));
   } catch (err) {
     next(err);
   }
@@ -57,14 +63,14 @@ exports.update = async (req, res, next) => {
     await user.update({ 
         id_role, 
         username, 
-        password_hash, // Y AQUÍ TAMBIÉN
+        password_hash,
         name, 
         lastname, 
         email, 
         status 
     });
 
-    res.json(user);
+    res.json(toSafeUser(user));
   } catch (err) {
     next(err);
   }

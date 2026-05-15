@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const health = require('../controllers/healthController');
+const authRoutes = require('./authRoutes');
 const userRoutes = require('./userRoutes');
 const careerRoutes = require('./careerRoutes');
 const subjectRoutes = require('./subjectRoutes');
@@ -19,6 +20,7 @@ const auditLogRoutes = require('./auditLogRoutes');
 const documentRequestRoutes = require('./documentRequestRoutes');
 
 router.get('/', health.ping);
+router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/careers', careerRoutes);
 router.use('/subjects', subjectRoutes);

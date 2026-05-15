@@ -1,21 +1,21 @@
 const express = require('express');
-const { body } = require('express-validator');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const validateRequest = require('../middlewares/validateRequest');
+const { validateZod } = require('../middlewares/validateZod');
+const { uuidIdParam } = require('../validators/commonSchemas');
+const { userCreateSchema, userUpdateSchema } = require('../validators/domainSchemas');
 
 router.get('/', userController.list);
 
 router.post(
   '/',
-  [body('username').isLength({ min: 3 }), body('name').notEmpty()],
-  validateRequest,
+  validateZod({ body: userCreateSchema }),
   userController.create
 );
 
-router.get('/:id', userController.get);
-router.put('/:id', userController.update);
-router.delete('/:id', userController.remove);
+router.get('/:id', validateZod({ params: uuidIdParam }), userController.get);
+router.put('/:id', validateZod({ params: uuidIdParam, body: userUpdateSchema }), userController.update);
+router.delete('/:id', validateZod({ params: uuidIdParam }), userController.remove);
 
 
 module.exports = router;

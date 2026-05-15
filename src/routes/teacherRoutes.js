@@ -1,13 +1,14 @@
 const express = require('express');
-const { body } = require('express-validator');
 const router = express.Router();
 const ctrl = require('../controllers/teacherController');
-const validate = require('../middlewares/validateRequest');
+const { validateZod } = require('../middlewares/validateZod');
+const { numericIdParam } = require('../validators/commonSchemas');
+const { teacherCreateSchema, teacherUpdateSchema } = require('../validators/domainSchemas');
 
 router.get('/', ctrl.list);
-router.get('/:id', ctrl.get);
-router.post('/', [body('id_user').notEmpty()], validate, ctrl.create);
-router.put('/:id', ctrl.update);
-router.delete('/:id', ctrl.remove);
+router.get('/:id', validateZod({ params: numericIdParam }), ctrl.get);
+router.post('/', validateZod({ body: teacherCreateSchema }), ctrl.create);
+router.put('/:id', validateZod({ params: numericIdParam, body: teacherUpdateSchema }), ctrl.update);
+router.delete('/:id', validateZod({ params: numericIdParam }), ctrl.remove);
 
 module.exports = router;
