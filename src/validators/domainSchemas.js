@@ -158,6 +158,19 @@ const authLoginSchema = z
   })
   .strict();
 
+const forgotPasswordSchema = z
+  .object({
+    email: z.string().trim().email(),
+  })
+  .strict();
+
+const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(6).max(100),
+    newPassword: z.string().min(6).max(100),
+  })
+  .strict();
+
 const careerCreateSchema = z
   .object({
     code_career: z.string().trim().min(2).max(20),
@@ -328,6 +341,8 @@ module.exports = {
   tokenIssueSchema,
   authRegisterSchema,
   authLoginSchema,
+  forgotPasswordSchema,
+  changePasswordSchema,
   userStatusSchema,
   studentStatusSchema,
   registrationStatusSchema,

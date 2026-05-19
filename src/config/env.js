@@ -18,6 +18,14 @@ const schema = Joi.object({
 
   JWT_SECRET: Joi.string().default('change_me'),
   JWT_EXPIRES_IN: Joi.string().default('1h'),
+
+  EMAIL_TRANSPORT: Joi.string().valid('log', 'smtp').default('log'),
+  EMAIL_FROM: Joi.string().email().default('no-reply@example.com'),
+  SMTP_HOST: Joi.string().when('EMAIL_TRANSPORT', { is: 'smtp', then: Joi.required() }),
+  SMTP_PORT: Joi.number().when('EMAIL_TRANSPORT', { is: 'smtp', then: Joi.required() }).default(587),
+  SMTP_SECURE: Joi.boolean().default(false),
+  SMTP_USER: Joi.string().when('EMAIL_TRANSPORT', { is: 'smtp', then: Joi.required() }),
+  SMTP_PASS: Joi.string().when('EMAIL_TRANSPORT', { is: 'smtp', then: Joi.required() }),
 }).unknown();
 
 const { value: envVars, error } = schema.validate(process.env);
@@ -43,4 +51,13 @@ module.exports = {
   },
   jwtSecret: envVars.JWT_SECRET,
   jwtExpiresIn: envVars.JWT_EXPIRES_IN,
+  email: {
+    transport: envVars.EMAIL_TRANSPORT,
+    from: envVars.EMAIL_FROM,
+    smtpHost: envVars.SMTP_HOST,
+    smtpPort: envVars.SMTP_PORT,
+    smtpSecure: envVars.SMTP_SECURE,
+    smtpUser: envVars.SMTP_USER,
+    smtpPass: envVars.SMTP_PASS,
+  },
 };
