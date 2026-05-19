@@ -53,7 +53,8 @@ Parametros observados:
 2. `requireAuth` valida el JWT y deja el payload en `req.auth`.
 3. Se verifica la contrasena actual.
 4. Se hashea la nueva contrasena.
-5. Se actualiza `password_hash`.
+5. Se valida que `confirmPassword` coincida con `newPassword`.
+6. Se actualiza `password_hash`.
 
 ## JWT
 
@@ -70,7 +71,7 @@ Puntos relevantes:
 
 - `authRegisterSchema` valida registro con `password` en vez de `password_hash`.
 - `authLoginSchema` valida credenciales de acceso.
-- `changePasswordSchema` valida la contrasena actual y la nueva.
+- `changePasswordSchema` valida la contrasena actual, la nueva y su confirmacion.
 - `userCreateSchema` y `userUpdateSchema` validan el CRUD administrativo de usuarios.
 
 ## Rutas protegidas
