@@ -84,6 +84,37 @@ Comportamiento:
 
 Campos principales: `currentPassword`, `newPassword`.
 
+### Recuperar contrasena
+
+- `POST /auth/forgot-password`
+
+Comportamiento:
+
+- Recibe un `email` en el body.
+- Si el correo no existe, devuelve `404` con mensaje informativo.
+- Si el correo existe, genera una contrasena temporal, actualiza `password_hash` y envia la nueva contrasena por email.
+- La contrasena temporal no expira automaticamente en esta version.
+
+Campos principales: `email`.
+
+Ejemplo de request:
+
+```json
+{ "email": "usuario@correo.com" }
+```
+
+Respuesta `200`:
+
+```json
+{ "message": "Se envio una nueva contrasena temporal al correo indicado" }
+```
+
+Respuesta `404`:
+
+```json
+{ "message": "No existe un usuario registrado con ese correo" }
+```
+
 ## Recursos
 
 ### Usuarios

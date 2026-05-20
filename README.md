@@ -36,7 +36,16 @@ DB_NAME_LOCAL=backend_db
 DB_USER_LOCAL=postgres
 DB_PASS_LOCAL=secret
 JWT_SECRET=change_me
+EMAIL_TRANSPORT=log
+EMAIL_FROM=no-reply@example.com
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=
+SMTP_PASS=
 ```
+
+Para envio real de correos, configura `EMAIL_TRANSPORT=smtp` y completa las variables SMTP.
 
 ## Ejecucion
 
@@ -65,6 +74,7 @@ npm start
 La API se expone bajo `/api`.
 
 - `GET /api`: health check.
+- `POST /api/auth/forgot-password`
 - `GET /api/users`
 - `GET /api/careers`
 - `GET /api/subjects`

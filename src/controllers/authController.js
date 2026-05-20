@@ -3,6 +3,8 @@ const { User, Role } = require('../models');
 const { signAccessToken } = require('../services/jwtService');
 const config = require('../config/env');
 const { hashPassword, verifyPassword } = require('../services/passwordService');
+const { sendEmail } = require('../services/emailService');
+const { recoverPassword } = require('../services/passwordRecoveryService');
 
 function toSafeUser(userInstance) {
   const user = userInstance.get({ plain: true });
@@ -115,6 +117,27 @@ async function login(req, res, next) {
   }
 }
 
+async function forgotPassword(req, res, next) {
+  try {
+    const result = await recoverPassword({
+      email: req.body.email,
+      findUserByEmail: async (email) => User.findOne({
+        where: {
+          email: {
+            [Op.iLike]: email,
+          },
+        },
+      }),
+      sendEmail,
+      hashPassword,
+    });
+
+    return res.status(result.status).json(result.body);
+  } catch (error) {
+    return next(error);
+  }
+}
+
 function me(req, res) {
   return res.json({
     authenticated: true,
@@ -155,4 +178,5 @@ module.exports = {
   issueToken,
   me,
   changePassword,
+  forgotPassword,
 };
