@@ -1,7 +1,11 @@
 const Joi = require('joi');
 const dotenv = require('dotenv');
 
-dotenv.config();
+if (process.env.NODE_ENV === 'test') {
+  dotenv.config({ path: '.env.test' });
+} else {
+  dotenv.config();
+}
 
 const schema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
