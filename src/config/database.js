@@ -3,6 +3,14 @@ const config = require('./env');
 
 let sequelize;
 
+function createTestSequelizeInstance() {
+  return new Sequelize({
+    dialect: 'sqlite',
+    storage: ':memory:',
+    logging: false,
+  });
+}
+
 function buildLocalUri() {
   const c = config.db.local;
   return `postgres://${encodeURIComponent(c.username)}:${encodeURIComponent(c.password)}@${c.host}:${c.port}/${c.database}`;
@@ -10,6 +18,10 @@ function buildLocalUri() {
 
 function createSequelizeInstance() {
   try {
+    if (config.env === 'test') {
+      return createTestSequelizeInstance();
+    }
+
     if (config.dbEnv === 'remote') {
       // Remote: expect a single connection URI
       const uri = config.db.remoteUri;

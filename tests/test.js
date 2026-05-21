@@ -1,10 +1,16 @@
+process.env.NODE_ENV = 'test';
+
+const { describe, it, before, after, beforeEach } = require('node:test');
+const { expect } = require('expect');
+
 const request = require('supertest');
 const { z } = require('zod');
 const app = require('../src/app');
 const { sequelize, User, Role, Career, Subject, Student, Registration, AcademicPeriod } = require('../src/models');
 const { hashPassword } = require('../src/services/passwordService');
 
-jest.setTimeout(30000); // Increase timeout for remote DB
+const beforeAll = before;
+const afterAll = after;
 
 // --- 1. SCHEMAS (ZOD) ---
 const loginSchema = z.object({

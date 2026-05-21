@@ -147,6 +147,7 @@ const authRegisterSchema = z
     name: z.string().trim().min(1).max(100),
     lastname: z.string().trim().min(1).max(100),
     email: z.string().trim().email(),
+    date_birth: z.string().optional().or(z.null()),
     status: userStatusSchema.optional(),
   })
   .strict();

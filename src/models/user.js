@@ -44,10 +44,12 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(20),
       allowNull: true, // OPCIONAL: Puede quedar nulo si el usuario no lo da.
     },
-    birth_date: {
-      type: DataTypes.DATEONLY, // Solo guarda fecha sin la hora (YYYY-MM-DD).
-      allowNull: false, // OBLIGATORIO: Importante para el registro académico.
-    },
+   // Cambia esto si dice birth_date
+    date_birth: {
+      type: DataTypes.DATEONLY, // o DataTypes.DATE
+      allowNull: true,
+      field: 'date_birth' // Esto le asegura a Sequelize el nombre real de la columna
+},
     status: {
       type: DataTypes.ENUM('Activo', 'Inactivo', 'Bloqueado'),
       defaultValue: 'Activo',
