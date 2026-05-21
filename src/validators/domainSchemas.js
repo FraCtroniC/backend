@@ -158,6 +158,17 @@ const authLoginSchema = z
   })
   .strict();
 
+const profileUpdateSchema = z
+  .object({
+    email: z.string().trim().email().optional(),
+    name: z.string().trim().min(1).max(100).optional(),
+    lastname: z.string().trim().min(1).max(100).optional(),
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: 'Debe enviar al menos un campo para actualizar',
+  });
+
 const forgotPasswordSchema = z
   .object({
     email: z.string().trim().email(),
@@ -351,6 +362,7 @@ module.exports = {
   tokenIssueSchema,
   authRegisterSchema,
   authLoginSchema,
+  profileUpdateSchema,
   forgotPasswordSchema,
   changePasswordSchema,
   userStatusSchema,

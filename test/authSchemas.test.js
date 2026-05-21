@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { changePasswordSchema } = require('../src/validators/domainSchemas');
+const { changePasswordSchema, profileUpdateSchema } = require('../src/validators/domainSchemas');
 
 test('changePasswordSchema requires confirmPassword and matches newPassword', () => {
   const validResult = changePasswordSchema.safeParse({
@@ -27,4 +27,22 @@ test('changePasswordSchema requires confirmPassword and matches newPassword', ()
 
   assert.equal(mismatchResult.success, false);
   assert.equal(mismatchResult.error.issues[0].path[0], 'confirmPassword');
+});
+
+test('profileUpdateSchema allows only editable profile fields and requires at least one', () => {
+  const validResult = profileUpdateSchema.safeParse({
+    email: 'usuario@correo.com',
+    name: 'Nombre',
+  });
+
+  assert.equal(validResult.success, true);
+
+  const emptyResult = profileUpdateSchema.safeParse({});
+  assert.equal(emptyResult.success, false);
+
+  const forbiddenFieldResult = profileUpdateSchema.safeParse({
+    id_role: 2,
+  });
+
+  assert.equal(forbiddenFieldResult.success, false);
 });

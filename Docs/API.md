@@ -27,6 +27,8 @@ Respuesta esperada:
 
 La ruta base de autenticacion es `/api/auth`.
 
+La documentacion Swagger esta disponible en `/api/docs`.
+
 ### Registro
 
 - `POST /auth/register`
@@ -71,6 +73,61 @@ Comportamiento:
 
 - Requiere un header `Authorization: Bearer <token>`.
 - Devuelve el payload autenticado en `req.auth`.
+
+### Perfil de usuario
+
+- `GET /auth/profile`
+
+Comportamiento:
+
+- Requiere un header `Authorization: Bearer <token>`.
+- Busca el usuario autenticado por `req.auth.sub`.
+- Devuelve solo `id`, `email`, `name`, `lastname` y `role`.
+
+Respuesta `200`:
+
+```json
+{
+  "id": "8baf8f0d-3c43-4d5d-9bc8-2bdc9f7b71d1",
+  "email": "usuario@correo.com",
+  "name": "Juan",
+  "lastname": "Perez",
+  "role": "Estudiante"
+}
+```
+
+### Actualizacion de perfil
+
+- `PUT /auth/profile_update`
+
+Comportamiento:
+
+- Requiere autenticacion.
+- Permite actualizar `email`, `name` y `lastname`.
+- No permite modificar `password_hash`, `username`, `document_id` ni `status` desde este flujo.
+- Valida que se envie al menos un campo.
+
+Ejemplo de request:
+
+```json
+{
+  "email": "nuevo@correo.com",
+  "name": "Juan",
+  "lastname": "Perez"
+}
+```
+
+Respuesta `200`:
+
+```json
+{
+  "id": "8baf8f0d-3c43-4d5d-9bc8-2bdc9f7b71d1",
+  "email": "nuevo@correo.com",
+  "name": "Juan",
+  "lastname": "Perez",
+  "role": "Estudiante"
+}
+```
 
 ### Cambio de contrasena
 

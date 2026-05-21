@@ -145,6 +145,78 @@ function me(req, res) {
   });
 }
 
+async function profile(req, res, next) {
+  try {
+    const userId = req.auth.sub;
+
+    const user = await User.findByPk(userId, {
+      attributes: ['id_user', 'email', 'name', 'lastname', 'id_role'],
+      include: [
+        {
+          model: Role,
+          attributes: ['id_role', 'name_role'],
+        },
+      ],
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    const data = user.get({ plain: true });
+
+    return res.json({
+      id: data.id_user,
+      email: data.email,
+      name: data.name,
+      lastname: data.lastname,
+      role: data.Role?.name_role ?? null,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function profileUpdate(req, res, next) {
+  try {
+    const userId = req.auth.sub;
+    const { email, name, lastname } = req.body;
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    await user.update({
+      ...(email !== undefined ? { email } : {}),
+      ...(name !== undefined ? { name } : {}),
+      ...(lastname !== undefined ? { lastname } : {}),
+    });
+
+    const updatedUser = await User.findByPk(userId, {
+      attributes: ['id_user', 'email', 'name', 'lastname', 'id_role'],
+      include: [
+        {
+          model: Role,
+          attributes: ['id_role', 'name_role'],
+        },
+      ],
+    });
+
+    const data = updatedUser.get({ plain: true });
+
+    return res.json({
+      id: data.id_user,
+      email: data.email,
+      name: data.name,
+      lastname: data.lastname,
+      role: data.Role?.name_role ?? null,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function changePassword(req, res, next) {
   try {
     const userId = req.auth.sub; // Extraído del token por requireAuth
@@ -177,6 +249,8 @@ module.exports = {
   login,
   issueToken,
   me,
+  profile,
+  profileUpdate,
   changePassword,
   forgotPassword,
 };
