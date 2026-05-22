@@ -24,6 +24,8 @@ API REST construida con Node.js, Express y Sequelize para gestionar usuarios, ca
 npm install
 ```
 
+Nota: este proyecto usa `patch-package` para mantener un fix permanente a la advertencia `DEP0169` de `url.parse()` en una dependencia transitive. El parche se aplica automaticamente en `postinstall`.
+
 Crear el archivo `.env` en la raiz del proyecto con variables como:
 
 ```env

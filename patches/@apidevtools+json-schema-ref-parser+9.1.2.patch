@@ -1,0 +1,57 @@
+*** Begin Patch
+*** Update File: node_modules/@apidevtools/json-schema-ref-parser/lib/util/url.js
+@@
+-exports.parse = require("url").parse;
+-exports.resolve = require("url").resolve;
++// Use the WHATWG URL API instead of the legacy `url.parse` / `url.resolve`.
++// These wrappers provide a minimal, compatible surface for the rest of
++// the library (which expects objects with properties like `href`,
++// `protocol`, `hostname`, and `path`).
++const { URL } = require('url');
++
++exports.parse = function parse (input) {
++  // If it's already a parsed-like object, return as-is
++  if (typeof input === 'object' && input !== null && input.href) {
++    return input;
++  }
++
++  try {
++    // If input is a Url object from legacy code, use its href. Otherwise treat as string
++    const str = typeof input === 'string' ? input : String(input);
++    const u = new URL(str);
++
++    return {
++      href: u.href,
++      protocol: u.protocol,
++      host: u.host,
++      hostname: u.hostname,
++      port: u.port || undefined,
++      pathname: u.pathname,
++      path: (u.pathname || '') + (u.search || ''),
++      search: u.search || '',
++      auth: (u.username ? u.username + (u.password ? ':' + u.password : '') : undefined)
++    };
++  }
++  catch (err) {
++    // If URL constructor fails (e.g. relative paths without base), fall back to a simple shim
++    return {
++      href: input,
++      path: input
++    };
++  }
++};
++
++exports.resolve = function resolve (base, relative) {
++  try {
++    const baseHref = (typeof base === 'object' && base !== null && base.href) ? base.href : String(base);
++    return new URL(String(relative), baseHref).href;
++  }
++  catch (err) {
++    // Fallback to simple concatenation if resolution fails
++    if (typeof base === 'string') {
++      return base.replace(/\/$/, '') + '/' + String(relative).replace(/^\//, '');
++    }
++    return String(relative);
++  }
++};
+*** End Patch

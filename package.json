@@ -8,7 +8,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "cors": "^2.8.6",
@@ -39,6 +40,7 @@
   "devDependencies": {
     "jest": "^30.4.2",
     "nodemon": "^3.1.14",
+    "patch-package": "^8.0.1",
     "sqlite3": "^6.0.1",
     "supertest": "^7.2.2"
   }
