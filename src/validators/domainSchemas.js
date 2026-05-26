@@ -176,6 +176,23 @@ const forgotPasswordSchema = z
   })
   .strict();
 
+const resetPasswordSchema = z
+  .object({
+    token: z.string().trim().min(20),
+    newPassword: z.string().min(6).max(100),
+    confirmPassword: z.string().min(6).max(100),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if (value.newPassword !== value.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['confirmPassword'],
+        message: 'La confirmacion no coincide con la nueva contrasena',
+      });
+    }
+  });
+
 const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(6).max(100),
@@ -365,6 +382,7 @@ module.exports = {
   authLoginSchema,
   profileUpdateSchema,
   forgotPasswordSchema,
+  resetPasswordSchema,
   changePasswordSchema,
   userStatusSchema,
   studentStatusSchema,

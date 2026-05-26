@@ -1,24 +1,29 @@
-const crypto = require('crypto');
+const config = require('../config/env');
+const { signAccessToken, verifyAccessToken } = require('./jwtService');
 
-function buildRecoveryEmailText(name, username, temporaryPassword, loginUrl) {
+function buildResetPasswordUrl(token, frontendUrl = config.frontendUrl) {
+  const normalizedBaseUrl = String(frontendUrl || '').replace(/\/$/, '');
+  return `${normalizedBaseUrl}/reset-password?token=${encodeURIComponent(token)}`;
+}
+
+function buildPasswordResetEmailText(name, username, resetUrl) {
   const displayName = name || username || 'usuario';
 
   return [
     `Hola ${displayName},`,
     '',
-    'Hemos generado una nueva contraseña temporal para tu cuenta.',
-    `Contraseña temporal: ${temporaryPassword}`,
+    'Recibimos una solicitud para restablecer tu contrasena.',
+    'Abre el siguiente enlace para elegir una nueva contrasena:',
+    resetUrl,
     '',
-    `Ingresa aqui: ${loginUrl}`,
-    '',
-    'Por seguridad, cambia esta contraseña apenas inicies sesion.',
+    'Este enlace tiene expiracion por seguridad.',
     'Si no solicitaste este cambio, puedes ignorar este correo.',
   ].join('\n');
 }
 
-function buildRecoveryEmailHtml(name, username, temporaryPassword, loginUrl) {
+function buildPasswordResetEmailHtml(name, username, resetUrl) {
   const displayName = name || username || 'usuario';
-  const preheader = 'Tu nueva contraseña temporal ya esta lista. Inicia sesion y cambiala cuanto antes.';
+  const preheader = 'Recibimos tu solicitud para restablecer la contrasena. Usa el enlace antes de que expire.';
 
   return `
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">
@@ -31,9 +36,9 @@ function buildRecoveryEmailHtml(name, username, temporaryPassword, loginUrl) {
             <tr>
               <td style="background:linear-gradient(135deg,#0f172a,#2563eb);padding:32px 40px;color:#ffffff;">
                 <div style="font-size:13px;letter-spacing:1.4px;text-transform:uppercase;opacity:0.9;margin-bottom:8px;">Recuperacion de contraseña</div>
-                <div style="font-size:30px;line-height:1.2;font-weight:700;">Tu acceso fue restablecido</div>
+                <div style="font-size:30px;line-height:1.2;font-weight:700;">Restablece tu acceso</div>
                 <div style="font-size:15px;line-height:1.6;margin-top:12px;opacity:0.95;">
-                  Hemos generado una nueva contraseña temporal para tu cuenta.
+                  Hemos preparado un enlace seguro para crear una nueva contraseña.
                 </div>
               </td>
             </tr>
@@ -43,19 +48,21 @@ function buildRecoveryEmailHtml(name, username, temporaryPassword, loginUrl) {
                   Hola ${displayName},
                 </div>
                 <div style="font-size:15px;line-height:1.7;color:#334155;margin-bottom:22px;">
-                  Usa la siguiente contraseña temporal para volver a ingresar a tu cuenta.
+                  Para completar el proceso, abre el siguiente enlace y define tu nueva contraseña.
                 </div>
                 <div style="background:#f8fafc;border:1px solid #dbeafe;border-radius:16px;padding:18px 20px;text-align:center;margin-bottom:26px;">
-                  <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:10px;">Contraseña temporal</div>
-                  <div style="font-size:28px;line-height:1.2;font-weight:700;color:#2563eb;word-break:break-word;letter-spacing:0.6px;">${temporaryPassword}</div>
+                  <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:10px;">Enlace de recuperación</div>
+                  <div style="font-size:14px;line-height:1.6;color:#2563eb;word-break:break-word;">
+                    ${resetUrl}
+                  </div>
                 </div>
                 <div style="text-align:center;margin-bottom:28px;">
-                  <a href="${loginUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:14px 24px;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 10px 20px rgba(37,99,235,0.18);">
-                    Iniciar sesion
+                  <a href="${resetUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:14px 24px;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 10px 20px rgba(37,99,235,0.18);">
+                    Crear nueva contraseña
                   </a>
                 </div>
                 <div style="font-size:14px;line-height:1.8;color:#475569;background:#f8fafc;border-radius:14px;padding:18px 20px;">
-                  Por seguridad, cambia esta contraseña apenas entres.
+                  Este enlace expira por seguridad.
                   <br>
                   Si no solicitaste este cambio, ignora este mensaje.
                 </div>
@@ -73,64 +80,89 @@ function buildRecoveryEmailHtml(name, username, temporaryPassword, loginUrl) {
   `;
 }
 
-function generateTemporaryPassword(length = 12) {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
-  const bytes = crypto.randomBytes(length);
-  let password = '';
-
-  for (let index = 0; index < length; index += 1) {
-    password += alphabet[bytes[index] % alphabet.length];
-  }
-
-  return password;
+function createPasswordResetToken(user, expiresIn = config.passwordResetTokenExpiresIn) {
+  return signAccessToken(
+    {
+      sub: user.id_user,
+      email: user.email,
+      purpose: 'password-reset',
+    },
+    { expiresIn }
+  );
 }
 
-async function recoverPassword({
-  email,
-  findUserByEmail,
+function verifyPasswordResetToken(token) {
+  const payload = verifyAccessToken(token);
+
+  if (payload?.purpose !== 'password-reset') {
+    const error = new Error('Token de recuperacion invalido');
+    error.status = 401;
+    throw error;
+  }
+
+  return payload;
+}
+
+async function requestPasswordReset({
+  user,
   sendEmail,
-  hashPassword,
-  generatePassword = generateTemporaryPassword,
-  loginUrl = 'http://localhost:5173/login',
+  frontendUrl = config.frontendUrl,
+  tokenExpiresIn = config.passwordResetTokenExpiresIn,
 }) {
-  const normalizedEmail = email.trim().toLowerCase();
-  const user = await findUserByEmail(normalizedEmail);
+  const token = createPasswordResetToken(user, tokenExpiresIn);
+  const resetUrl = buildResetPasswordUrl(token, frontendUrl);
+
+  await sendEmail({
+    to: user.email,
+    subject: 'Recuperacion de contrasena',
+    text: buildPasswordResetEmailText(user.name, user.username, resetUrl),
+    html: buildPasswordResetEmailHtml(user.name, user.username, resetUrl),
+  });
+
+  return {
+    token,
+    resetUrl,
+  };
+}
+
+async function completePasswordReset({
+  token,
+  newPassword,
+  findUserById,
+  hashPassword,
+}) {
+  const payload = verifyPasswordResetToken(token);
+  const user = await findUserById(payload.sub);
 
   if (!user) {
     return {
       status: 404,
-      body: { message: 'No existe un usuario registrado con ese correo' },
+      body: { message: 'Usuario no encontrado' },
     };
   }
 
-  const temporaryPassword = generatePassword();
-  const previousPasswordHash = user.password_hash;
-
-  await user.update({
-    password_hash: hashPassword(temporaryPassword),
-  });
-
-  try {
-    await sendEmail({
-      to: user.email,
-      subject: 'Recuperacion de contrasena',
-      text: buildRecoveryEmailText(user.name, user.username, temporaryPassword, loginUrl),
-      html: buildRecoveryEmailHtml(user.name, user.username, temporaryPassword, loginUrl),
-    });
-  } catch (error) {
-    await user.update({ password_hash: previousPasswordHash });
+  if (user.email !== payload.email) {
+    const error = new Error('El token de recuperacion no coincide con el usuario');
+    error.status = 400;
     throw error;
   }
 
+  await user.update({
+    password_hash: hashPassword(newPassword),
+  });
+
   return {
     status: 200,
-    body: { message: 'Se envio una nueva contrasena temporal al correo indicado' },
+    body: { message: 'Contrasena actualizada con exito' },
   };
 }
 
 module.exports = {
-  generateTemporaryPassword,
-  recoverPassword,
-  buildRecoveryEmailHtml,
-  buildRecoveryEmailText,
+  buildPasswordResetEmailHtml,
+  buildPasswordResetEmailText,
+  buildResetPasswordUrl,
+  completePasswordReset,
+  createPasswordResetToken,
+  requestPasswordReset,
+  verifyPasswordResetToken,
 };

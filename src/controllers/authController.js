@@ -4,7 +4,10 @@ const { signAccessToken } = require('../services/jwtService');
 const config = require('../config/env');
 const { hashPassword, verifyPassword } = require('../services/passwordService');
 const { sendEmail } = require('../services/emailService');
-const { recoverPassword } = require('../services/passwordRecoveryService');
+const {
+  requestPasswordReset,
+  completePasswordReset,
+} = require('../services/passwordRecoveryService');
 
 function toSafeUser(userInstance) {
   const user = userInstance.get({ plain: true });
@@ -119,16 +122,37 @@ async function login(req, res, next) {
 
 async function forgotPassword(req, res, next) {
   try {
-    const result = await recoverPassword({
-      email: req.body.email,
-      findUserByEmail: async (email) => User.findOne({
-        where: {
-          email: {
-            [Op.iLike]: email,
-          },
+    const user = await User.findOne({
+      where: {
+        email: {
+          [Op.iLike]: req.body.email.trim().toLowerCase(),
         },
-      }),
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'No existe un usuario registrado con ese correo' });
+    }
+
+    await requestPasswordReset({
+      user,
       sendEmail,
+      frontendUrl: config.frontendUrl,
+      tokenExpiresIn: config.passwordResetTokenExpiresIn,
+    });
+
+    return res.json({ message: 'Se envio un enlace de recuperacion al correo indicado' });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function resetPassword(req, res, next) {
+  try {
+    const result = await completePasswordReset({
+      token: req.body.token,
+      newPassword: req.body.newPassword,
+      findUserById: async (userId) => User.findByPk(userId),
       hashPassword,
     });
 
@@ -253,4 +277,5 @@ module.exports = {
   profileUpdate,
   changePassword,
   forgotPassword,
+  resetPassword,
 };

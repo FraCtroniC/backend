@@ -149,8 +149,8 @@ Comportamiento:
 
 - Recibe un `email` en el body.
 - Si el correo no existe, devuelve `404` con mensaje informativo.
-- Si el correo existe, genera una contrasena temporal, actualiza `password_hash` y envia la nueva contrasena por email.
-- La contrasena temporal no expira automaticamente en esta version.
+- Si el correo existe, genera un token JWT de recuperacion, construye un enlace hacia el frontend y lo envia por email.
+- El token expira segun `PASSWORD_RESET_TOKEN_EXPIRES_IN`.
 
 Campos principales: `email`.
 
@@ -163,13 +163,41 @@ Ejemplo de request:
 Respuesta `200`:
 
 ```json
-{ "message": "Se envio una nueva contrasena temporal al correo indicado" }
+{ "message": "Se envio un enlace de recuperacion al correo indicado" }
 ```
 
 Respuesta `404`:
 
 ```json
 { "message": "No existe un usuario registrado con ese correo" }
+```
+
+### Restablecer contrasena
+
+- `POST /auth/reset-password`
+
+Comportamiento:
+
+- Recibe `token`, `newPassword` y `confirmPassword`.
+- Verifica que el token sea valido y no haya expirado.
+- Busca al usuario asociado al token y actualiza su `password_hash` con la nueva contrasena.
+
+Campos principales: `token`, `newPassword`, `confirmPassword`.
+
+Ejemplo de request:
+
+```json
+{
+  "token": "jwt_de_recuperacion",
+  "newPassword": "MiNuevaClave123!",
+  "confirmPassword": "MiNuevaClave123!"
+}
+```
+
+Respuesta `200`:
+
+```json
+{ "message": "Contrasena actualizada con exito" }
 ```
 
 ## Recursos

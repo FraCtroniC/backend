@@ -11,6 +11,7 @@ const {
   changePasswordSchema,
   profileUpdateSchema,
   forgotPasswordSchema,
+  resetPasswordSchema,
 } = require('../validators/domainSchemas');
 
 router.post('/register', validateZod({ body: authRegisterSchema }), authController.register);
@@ -19,6 +20,11 @@ router.post(
   '/forgot-password',
   validateZod({ body: forgotPasswordSchema }),
   authController.forgotPassword
+);
+router.post(
+  '/reset-password',
+  validateZod({ body: resetPasswordSchema }),
+  authController.resetPassword
 );
 router.post('/token', validateZod({ body: tokenIssueSchema }), authController.issueToken);
 router.get('/me', requireAuth, authController.me);
