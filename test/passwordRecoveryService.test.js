@@ -59,6 +59,9 @@ test('recoverPassword updates the hash and sends the temporary password', async 
   assert.equal(updates[0].password_hash, 'hash:Temp1234!');
   assert.equal(sentMail.to, 'student@example.com');
   assert.match(sentMail.text, /Temp1234!/);
+  assert.match(sentMail.html, /display:none;max-height:0;overflow:hidden;opacity:0;color:transparent/);
+  assert.match(sentMail.html, /Iniciar sesion/);
+  assert.match(sentMail.html, /Temp1234!/);
 });
 
 test('recoverPassword rolls back the hash when email sending fails', async () => {
