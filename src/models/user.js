@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     id_role: {
       type: DataTypes.INTEGER,
-      allowNull: false, // OBLIGATORIO: Todo usuario debe tener un rol asignado.
+      allowNull: true,
     },
     document_id: {
       type: DataTypes.STRING(25),
@@ -24,35 +24,53 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    name: {
-      type: DataTypes.STRING(100),
-      allowNull: false, // OBLIGATORIO.
-    },
-    lastname: {
-      type: DataTypes.STRING(100),
-      allowNull: false, // OBLIGATORIO.
-    },
     email: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-      unique: true,
+      type: DataTypes.STRING(255),
+      allowNull: true,
       validate: {
-        isEmail: true, // Sequelize valida que sea un correo real.
+        isEmail: true,
       }
     },
     phone: {
-      type: DataTypes.STRING(20),
-      allowNull: true, // OPCIONAL: Puede quedar nulo si el usuario no lo da.
-    },
-   // Cambia esto si dice birth_date
-    date_birth: {
-      type: DataTypes.DATEONLY, // o DataTypes.DATE
+      type: DataTypes.STRING(25),
       allowNull: true,
-      field: 'date_birth' // Esto le asegura a Sequelize el nombre real de la columna
-},
+    },
+    date_birth: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      field: 'date_birth'
+    },
+    first_name: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    second_name: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    first_lastname: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    second_lastname: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    updated_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    last_login: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
     status: {
       type: DataTypes.ENUM('Activo', 'Inactivo', 'Bloqueado'),
-      defaultValue: 'Activo',
+      allowNull: true,
     },
   }, {
     tableName: 'user_account',

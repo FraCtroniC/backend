@@ -18,6 +18,12 @@ const roleRoutes = require('./roleRoutes');
 const academicPeriodRoutes = require('./academicPeriodRoutes');
 const auditLogRoutes = require('./auditLogRoutes');
 const documentRequestRoutes = require('./documentRequestRoutes');
+const semesterRoutes = require('./semesterRoutes');
+const stateRoutes = require('./stateRoutes');
+const municipalityRoutes = require('./municipalityRoutes');
+const parishRoutes = require('./parishRoutes');
+const preRegistrationRoutes = require('./preRegistrationRoutes');
+const preDocumentRoutes = require('./preDocumentRoutes');
 
 router.get('/', health.ping);
 router.use('/auth', authRoutes);
@@ -36,5 +42,11 @@ router.use('/roles', roleRoutes);
 router.use('/periods', academicPeriodRoutes);
 router.use('/audit-logs', auditLogRoutes);
 router.use('/document-requests', documentRequestRoutes);
+router.use('/semesters', semesterRoutes);
+router.use('/states', stateRoutes);
+router.use('/municipalities', municipalityRoutes);
+router.use('/parishes', parishRoutes);
+router.use('/pre-registrations', preRegistrationRoutes);
+router.use('/pre-documents', preDocumentRoutes);
 
 module.exports = router;

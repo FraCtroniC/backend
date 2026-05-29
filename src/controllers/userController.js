@@ -33,15 +33,32 @@ exports.get = async (req, res, next) => {
 // 3. Crear un nuevo usuario
 exports.create = async (req, res, next) => {
   try {
-    const { id_role, document_id, username, password_hash, name, lastname, email, status } = req.body;
+    const {
+      id_role,
+      document_id,
+      username,
+      password_hash,
+      first_name,
+      second_name,
+      first_lastname,
+      second_lastname,
+      email,
+      phone,
+      date_birth,
+      status,
+    } = req.body;
     const user = await User.create({ 
         id_role, 
         document_id, 
         username, 
         password_hash,
-        name, 
-        lastname, 
+        first_name,
+        second_name,
+        first_lastname,
+        second_lastname,
         email, 
+        phone,
+        date_birth,
         status 
     });
     res.status(201).json(toSafeUser(user));
@@ -58,15 +75,31 @@ exports.update = async (req, res, next) => {
     }
 
     // AGREGAMOS password_hash AQUÍ ABAJO:
-    const { id_role, username, password_hash, name, lastname, email, status } = req.body;
+    const {
+      id_role,
+      username,
+      password_hash,
+      first_name,
+      second_name,
+      first_lastname,
+      second_lastname,
+      email,
+      phone,
+      date_birth,
+      status,
+    } = req.body;
 
     await user.update({ 
         id_role, 
         username, 
         password_hash,
-        name, 
-        lastname, 
+      first_name,
+      second_name,
+      first_lastname,
+      second_lastname,
         email, 
+      phone,
+      date_birth,
         status 
     });
 

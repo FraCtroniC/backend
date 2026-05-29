@@ -23,14 +23,10 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id_career'
       }
     },
-    current_semester: {
+    id_semester: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 1,
-      validate: {
-        min: 1,
-        max: 12 // O el límite de semestres que tenga la UPTNTMS
-      }
     },
     status: {
       type: DataTypes.ENUM('Regular', 'Retirado', 'Egresado', 'Suspendido'),

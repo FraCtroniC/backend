@@ -20,12 +20,12 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false 
     },
     enrollment_status: { 
-      type: DataTypes.ENUM('Cerrada', 'Abierta', 'Modificaciones'), 
+      type: DataTypes.ENUM('Planificacion', 'Activo', 'Culminado', 'Cerrada', 'Abierta', 'Modificaciones'),
       allowNull: false,
       defaultValue: 'Cerrada'
     },
     period_status: { 
-      type: DataTypes.ENUM('Planificacion', 'Activo', 'Culminado'), 
+      type: DataTypes.ENUM('Cerrada', 'Abierta', 'Modificaciones', 'Planificacion', 'Activo', 'Culminado'),
       allowNull: false,
       defaultValue: 'Planificacion'
     },

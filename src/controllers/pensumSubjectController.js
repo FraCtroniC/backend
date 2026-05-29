@@ -6,7 +6,7 @@ exports.list = async (req, res, next) => {
   try {
     // Los ordenamos por semestre para que el pensum se vea organizado
     const items = await PensumSubject.findAll({ 
-      order: [['semester', 'ASC'], ['id_pensum', 'ASC']] 
+      order: [['id_semester', 'ASC'], ['id_pensum', 'ASC']] 
     });
     res.json(items);
   } catch (err) { 
@@ -30,12 +30,13 @@ exports.get = async (req, res, next) => {
 // 3. Asignar materia a un pensum (POST)
 exports.create = async (req, res, next) => {
   try {
-    const { id_pensum, id_subject, semester } = req.body;
+    const { id_pensum, id_subject, id_semester, code_subject } = req.body;
     
     const newItem = await PensumSubject.create({ 
       id_pensum, 
       id_subject, 
-      semester 
+      id_semester,
+      code_subject,
     });
     
     res.status(201).json(newItem);
@@ -52,12 +53,13 @@ exports.update = async (req, res, next) => {
       return res.status(404).json({ message: 'Relación no encontrada' });
     }
 
-    const { id_pensum, id_subject, semester } = req.body;
+    const { id_pensum, id_subject, id_semester, code_subject } = req.body;
 
     await item.update({ 
       id_pensum, 
       id_subject, 
-      semester 
+      id_semester,
+      code_subject,
     });
 
     res.json(item);

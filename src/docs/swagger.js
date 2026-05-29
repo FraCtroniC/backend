@@ -40,13 +40,35 @@ const spec = swaggerJSDoc({
               type: 'string',
               format: 'email',
             },
+            phone: {
+              type: 'string',
+              nullable: true,
+            },
+            first_name: {
+              type: 'string',
+              nullable: true,
+            },
+            second_name: {
+              type: 'string',
+              nullable: true,
+            },
+            first_lastname: {
+              type: 'string',
+              nullable: true,
+            },
+            second_lastname: {
+              type: 'string',
+              nullable: true,
+            },
             name: {
               type: 'string',
               nullable: true,
+              readOnly: true,
             },
             lastname: {
               type: 'string',
               nullable: true,
+              readOnly: true,
             },
             role: {
               type: 'string',
@@ -54,7 +76,7 @@ const spec = swaggerJSDoc({
               readOnly: true,
             },
           },
-          required: ['id', 'email', 'name', 'lastname', 'role'],
+          required: ['id', 'role'],
         },
         ProfileUpdate: {
           type: 'object',
@@ -65,13 +87,33 @@ const spec = swaggerJSDoc({
               format: 'email',
               maxLength: 255,
             },
+            phone: {
+              type: 'string',
+              maxLength: 25,
+            },
+            first_name: {
+              type: 'string',
+              maxLength: 50,
+            },
+            second_name: {
+              type: 'string',
+              maxLength: 50,
+            },
+            first_lastname: {
+              type: 'string',
+              maxLength: 50,
+            },
+            second_lastname: {
+              type: 'string',
+              maxLength: 50,
+            },
             name: {
               type: 'string',
-              maxLength: 100,
+              maxLength: 50,
             },
             lastname: {
               type: 'string',
-              maxLength: 100,
+              maxLength: 50,
             },
           },
         },

@@ -16,12 +16,12 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     academic_grade: {
-      type: DataTypes.STRING(50), // Subí a 50 por si el título es largo (ej. "Magister Scientiarum")
-      allowNull: false
+      type: DataTypes.STRING(20),
+      allowNull: true
     },
     profession: {
       type: DataTypes.STRING(100),
-      allowNull: false
+      allowNull: true
     },
   }, {
     tableName: 'teacher',

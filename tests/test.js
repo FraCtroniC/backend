@@ -6,7 +6,17 @@ const { expect } = require('expect');
 const request = require('supertest');
 const { z } = require('zod');
 const app = require('../src/app');
-const { sequelize, User, Role, Career, Subject, Student, Registration, AcademicPeriod } = require('../src/models');
+const {
+  sequelize,
+  User,
+  Role,
+  Career,
+  Subject,
+  Student,
+  Registration,
+  AcademicPeriod,
+  Semester,
+} = require('../src/models');
 const { hashPassword } = require('../src/services/passwordService');
 
 const beforeAll = before;
@@ -63,10 +73,10 @@ async function createTestUser(roleId, override = {}) {
     document_id: override.document_id ?? `V-${override.username ?? 'testuser'}`,
     username: 'testuser',
     password_hash: hashPassword('password123'),
-    name: 'Test',
-    lastname: 'User',
+    first_name: 'Test',
+    first_lastname: 'User',
     email: 'testuser@example.com',
-    birth_date: '2000-01-01',
+    date_birth: '2000-01-01',
     status: 'Activo',
     ...override,
   });
@@ -89,11 +99,11 @@ async function createTestSubject() {
   });
 }
 
-async function createTestStudent(userId, careerId) {
+async function createTestStudent(userId, careerId, semesterId) {
   return await Student.create({
     id_user: userId,
     id_career: careerId,
-    current_semester: 1,
+    id_semester: semesterId,
     admission_date: new Date(),
     status: 'Regular',
   });
@@ -270,6 +280,7 @@ describe('API Integration Tests (6 Endpoints)', () => {
     beforeEach(async () => {
       await Registration.destroy({ where: {} });
       await Student.destroy({ where: {} });
+      await Semester.destroy({ where: {} });
       await AcademicPeriod.destroy({ where: {} });
       await Career.destroy({ where: {} });
       await User.destroy({ where: {} });
@@ -284,7 +295,12 @@ describe('API Integration Tests (6 Endpoints)', () => {
       token = loginRes.body.access_token;
 
       const career = await createTestCareer();
-      testStudent = await createTestStudent(user.id_user, career.id_career);
+      const semester = await Semester.create({
+        name_semester: 'Primer Semestre',
+        number_semester: 1,
+      });
+
+      testStudent = await createTestStudent(user.id_user, career.id_career, semester.id_semester);
 
       testPeriod = await AcademicPeriod.create({
         name_period: '2026-I',

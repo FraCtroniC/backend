@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     document_type: { 
-      type: DataTypes.ENUM('Constancia de Estudio', 'Notas Certificadas', 'Horario', 'Record Académico'), 
+      type: DataTypes.STRING(50),
       allowNull: false 
     },
     request_date: { 
@@ -23,13 +23,13 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: DataTypes.NOW 
     },
     status: { 
-      type: DataTypes.ENUM('Pendiente', 'Generado', 'Rechazado'), 
-      allowNull: false,
-      defaultValue: 'Pendiente'
+      type: DataTypes.ENUM('Emitido', 'Anulado'),
+      allowNull: true,
+      defaultValue: 'Emitido'
     },
     hash_verification: { 
       type: DataTypes.STRING(255),
-      unique: true // El hash debe ser único para cada documento
+      allowNull: true,
     },
   }, {
     tableName: 'document_request',

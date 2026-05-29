@@ -22,22 +22,25 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id_subject'
       }
     },
-    semester: { 
+    id_semester: {
       type: DataTypes.INTEGER, 
       allowNull: false,
-      validate: {
-        min: 1,
-        max: 12 // Límite lógico de semestres
+      references: {
+        model: 'semester',
+        key: 'id_semester'
       }
+    },
+    code_subject: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
     },
   }, {
     tableName: 'pensum_subject',
     timestamps: false,
-    // Índice único para evitar que la misma materia esté duplicada en el mismo pensum
     indexes: [
       {
         unique: true,
-        fields: ['id_pensum', 'id_subject']
+        fields: ['id_pensum', 'code_subject']
       }
     ]
   });

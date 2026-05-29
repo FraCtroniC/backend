@@ -115,8 +115,8 @@ async function requestPasswordReset({
   await sendEmail({
     to: user.email,
     subject: 'Recuperacion de contrasena',
-    text: buildPasswordResetEmailText(user.name, user.username, resetUrl),
-    html: buildPasswordResetEmailHtml(user.name, user.username, resetUrl),
+    text: buildPasswordResetEmailText(user.first_name || user.name, user.username, resetUrl),
+    html: buildPasswordResetEmailHtml(user.first_name || user.name, user.username, resetUrl),
   });
 
   return {

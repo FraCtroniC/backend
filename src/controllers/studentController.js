@@ -29,12 +29,12 @@ exports.get = async (req, res, next) => {
 exports.create = async (req, res, next) => {
   try {
     // Extraemos tus campos específicos
-    const { id_user, id_career, current_semester, status, admission_date } = req.body;
+    const { id_user, id_career, id_semester, status, admission_date } = req.body;
     
     const newStudent = await Student.create({ 
       id_user, 
       id_career, 
-      current_semester, 
+      id_semester,
       status, 
       admission_date 
     });
@@ -54,11 +54,11 @@ exports.update = async (req, res, next) => {
     }
 
     // Permitimos actualizar carrera, semestre y estatus
-    const { id_career, current_semester, status, admission_date } = req.body;
+    const { id_career, id_semester, status, admission_date } = req.body;
 
     await student.update({ 
       id_career, 
-      current_semester, 
+      id_semester,
       status, 
       admission_date 
     });

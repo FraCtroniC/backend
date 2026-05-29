@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     action: { 
-      type: DataTypes.ENUM('INSERT', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT'), 
+      type: DataTypes.STRING(50),
       allowNull: false 
     },
     table_affected: { 

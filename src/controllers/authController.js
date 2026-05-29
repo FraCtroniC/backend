@@ -33,10 +33,20 @@ function buildAuthResponse(userInstance, expiresIn) {
   };
 }
 
-async function ensureUniqueUser(username, email) {
+async function ensureUniqueUser({ username, email, document_id }) {
+  const orConditions = [{ username }];
+
+  if (email) {
+    orConditions.push({ email });
+  }
+
+  if (document_id) {
+    orConditions.push({ document_id });
+  }
+
   return User.findOne({
     where: {
-      [Op.or]: [{ username }, { email }],
+      [Op.or]: orConditions,
     },
   });
 }
@@ -65,11 +75,24 @@ function issueToken(req, res, next) {
 
 async function register(req, res, next) {
   try {
-    const { id_role, document_id, username, password, name, lastname, email, status } = req.body;
+    const {
+      id_role,
+      document_id,
+      username,
+      password,
+      first_name,
+      second_name,
+      first_lastname,
+      second_lastname,
+      email,
+      phone,
+      date_birth,
+      status,
+    } = req.body;
 
-    const existingUser = await ensureUniqueUser(username, email);
+    const existingUser = await ensureUniqueUser({ username, email, document_id });
     if (existingUser) {
-      return res.status(409).json({ message: 'El usuario o correo ya existe' });
+      return res.status(409).json({ message: 'El usuario, correo o documento ya existe' });
     }
 
     if (id_role != null) {
@@ -84,9 +107,13 @@ async function register(req, res, next) {
       document_id,
       username,
       password_hash: hashPassword(password),
-      name,
-      lastname,
-      email,
+      first_name,
+      second_name,
+      first_lastname,
+      second_lastname,
+      email: email ?? null,
+      phone,
+      date_birth,
       status: status || 'Activo',
     });
 
@@ -174,7 +201,16 @@ async function profile(req, res, next) {
     const userId = req.auth.sub;
 
     const user = await User.findByPk(userId, {
-      attributes: ['id_user', 'email', 'name', 'lastname', 'id_role'],
+      attributes: [
+        'id_user',
+        'email',
+        'phone',
+        'first_name',
+        'second_name',
+        'first_lastname',
+        'second_lastname',
+        'id_role',
+      ],
       include: [
         {
           model: Role,
@@ -192,8 +228,13 @@ async function profile(req, res, next) {
     return res.json({
       id: data.id_user,
       email: data.email,
-      name: data.name,
-      lastname: data.lastname,
+      phone: data.phone,
+      first_name: data.first_name,
+      second_name: data.second_name,
+      first_lastname: data.first_lastname,
+      second_lastname: data.second_lastname,
+      name: data.first_name,
+      lastname: data.first_lastname,
       role: data.Role?.name_role ?? null,
     });
   } catch (error) {
@@ -204,7 +245,14 @@ async function profile(req, res, next) {
 async function profileUpdate(req, res, next) {
   try {
     const userId = req.auth.sub;
-    const { email, name, lastname } = req.body;
+    const {
+      email,
+      phone,
+      first_name,
+      second_name,
+      first_lastname,
+      second_lastname,
+    } = req.body;
 
     const user = await User.findByPk(userId);
     if (!user) {
@@ -213,12 +261,24 @@ async function profileUpdate(req, res, next) {
 
     await user.update({
       ...(email !== undefined ? { email } : {}),
-      ...(name !== undefined ? { name } : {}),
-      ...(lastname !== undefined ? { lastname } : {}),
+      ...(phone !== undefined ? { phone } : {}),
+      ...(first_name !== undefined ? { first_name } : {}),
+      ...(second_name !== undefined ? { second_name } : {}),
+      ...(first_lastname !== undefined ? { first_lastname } : {}),
+      ...(second_lastname !== undefined ? { second_lastname } : {}),
     });
 
     const updatedUser = await User.findByPk(userId, {
-      attributes: ['id_user', 'email', 'name', 'lastname', 'id_role'],
+      attributes: [
+        'id_user',
+        'email',
+        'phone',
+        'first_name',
+        'second_name',
+        'first_lastname',
+        'second_lastname',
+        'id_role',
+      ],
       include: [
         {
           model: Role,
@@ -232,8 +292,13 @@ async function profileUpdate(req, res, next) {
     return res.json({
       id: data.id_user,
       email: data.email,
-      name: data.name,
-      lastname: data.lastname,
+      phone: data.phone,
+      first_name: data.first_name,
+      second_name: data.second_name,
+      first_lastname: data.first_lastname,
+      second_lastname: data.second_lastname,
+      name: data.first_name,
+      lastname: data.first_lastname,
       role: data.Role?.name_role ?? null,
     });
   } catch (error) {
