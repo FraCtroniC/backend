@@ -26,6 +26,7 @@ const schema = Joi.object({
 
   EMAIL_TRANSPORT: Joi.string().valid('log', 'smtp').default('log'),
   EMAIL_FROM: Joi.string().email().default('no-reply@example.com'),
+  ADMIN_NOTIFICATION_EMAILS: Joi.string().allow('').optional(),
   SMTP_HOST: Joi.string().when('EMAIL_TRANSPORT', { is: 'smtp', then: Joi.required() }),
   SMTP_PORT: Joi.number().when('EMAIL_TRANSPORT', { is: 'smtp', then: Joi.required() }).default(587),
   SMTP_SECURE: Joi.boolean().default(false),
@@ -68,4 +69,5 @@ module.exports = {
     smtpPass: envVars.SMTP_PASS,
   },
   frontendUrl: envVars.FRONTEND_URL,
+  adminNotificationEmails: envVars.ADMIN_NOTIFICATION_EMAILS || '',
 };
