@@ -1,10 +1,17 @@
-const { PreRegistration, User, Role } = require('../models');
+const { PreRegistration, User, Role, State, Municipality, Parish, Career, Semester } = require('../models');
 const { sendEmail } = require('../services/emailService');
 const config = require('../config/env');
 
 exports.list = async (req, res, next) => {
   try {
     const items = await PreRegistration.findAll({
+      include: [
+        { model: State, attributes: ['id_state', 'name_state'] },
+        { model: Municipality, attributes: ['id_municipality', 'name_municipality'] },
+        { model: Parish, attributes: ['id_parish', 'name_parish'] },
+        { model: Career, attributes: ['id_career', 'name_career'] },
+        { model: Semester, attributes: ['id_semester', 'number_semester'] }
+      ],
       order: [['created_at', 'DESC']],
       limit: 100,
     });
@@ -16,7 +23,15 @@ exports.list = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
   try {
-    const item = await PreRegistration.findByPk(req.params.id);
+    const item = await PreRegistration.findByPk(req.params.id, {
+      include: [
+        { model: State, attributes: ['id_state', 'name_state'] },
+        { model: Municipality, attributes: ['id_municipality', 'name_municipality'] },
+        { model: Parish, attributes: ['id_parish', 'name_parish'] },
+        { model: Career, attributes: ['id_career', 'name_career'] },
+        { model: Semester, attributes: ['id_semester', 'number_semester'] }
+      ]
+    });
     if (!item) {
       return res.status(404).json({ message: 'Pre-registro no encontrado' });
     }
