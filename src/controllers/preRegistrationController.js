@@ -102,28 +102,56 @@ exports.create = async (req, res, next) => {
           `Revisa el preregistro: ${reviewUrl}`;
 
         const html = `
-          <div style="font-family: Arial, Helvetica, sans-serif; color: #222;">
-            <h2 style="color: #0b5ed7;">Nuevo pre-registro pendiente</h2>
-            <p>Se ha recibido un nuevo pre-registro que requiere revisión por parte del equipo administrativo.</p>
-            <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
-              <tr>
-                <td style="padding: 8px; border: 1px solid #e9ecef;"><strong>Aspirante</strong></td>
-                <td style="padding: 8px; border: 1px solid #e9ecef;">${aspirantName || 'N/D'}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px; border: 1px solid #e9ecef;"><strong>Documento</strong></td>
-                <td style="padding: 8px; border: 1px solid #e9ecef;">${item.document_type}-${item.document_id}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px; border: 1px solid #e9ecef;"><strong>ID</strong></td>
-                <td style="padding: 8px; border: 1px solid #e9ecef;">${item.id_pre}</td>
-              </tr>
-            </table>
-            <p style="margin-top:16px;">Accede al preregistro para revisarlo:</p>
-            <p><a href="${reviewUrl}" style="display:inline-block;padding:10px 14px;background:#0b5ed7;color:#fff;border-radius:4px;text-decoration:none;">Ver preregistro</a></p>
-            <hr style="border:none;border-top:1px solid #eee;margin-top:20px;" />
-            <p style="font-size:12px;color:#666;">Este correo fue generado automáticamente. No responda a este mensaje.</p>
-          </div>`;
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:0;padding:0;width:100%;background:#f4f7fb;">
+            <tr>
+              <td align="center" style="padding:32px 16px;">
+                <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 12px 34px rgba(15,23,42,0.12);font-family:Arial,Helvetica,sans-serif;">
+                  <tr>
+                    <td style="background:linear-gradient(135deg,#0f172a,#2563eb);padding:32px 40px;color:#ffffff;">
+                      <div style="font-size:13px;letter-spacing:1.4px;text-transform:uppercase;opacity:0.9;margin-bottom:8px;">Portal Académico UPTNT</div>
+                      <div style="font-size:28px;line-height:1.2;font-weight:700;">Nuevo pre-registro pendiente</div>
+                      <div style="font-size:15px;line-height:1.6;margin-top:12px;opacity:0.95;">
+                        Se ha recibido un nuevo pre-registro que requiere revisión.
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:40px 40px 24px;color:#0f172a;">
+                      <div style="font-size:15px;line-height:1.7;color:#334155;margin-bottom:22px;">
+                        Se ha recibido un nuevo pre-registro que requiere revisión por parte del equipo administrativo.
+                      </div>
+                      <div style="background:#f8fafc;border:1px solid #dbeafe;border-radius:16px;padding:18px 20px;margin-bottom:26px;">
+                        <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:12px;">Datos del aspirante</div>
+                        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                          <tr>
+                            <td style="padding:8px 10px;color:#64748b;font-weight:700;width:40%;border-bottom:1px solid #e2e8f0;">Aspirante</td>
+                            <td style="padding:8px 10px;color:#0f172a;border-bottom:1px solid #e2e8f0;">${aspirantName || 'N/D'}</td>
+                          </tr>
+                          <tr>
+                            <td style="padding:8px 10px;color:#64748b;font-weight:700;border-bottom:1px solid #e2e8f0;">Documento</td>
+                            <td style="padding:8px 10px;color:#0f172a;border-bottom:1px solid #e2e8f0;">${item.document_type}-${item.document_id}</td>
+                          </tr>
+                          <tr>
+                            <td style="padding:8px 10px;color:#64748b;font-weight:700;">ID</td>
+                            <td style="padding:8px 10px;color:#0f172a;">${item.id_pre}</td>
+                          </tr>
+                        </table>
+                      </div>
+                      <div style="font-size:15px;line-height:1.7;color:#334155;margin-bottom:22px;">Accede al panel para revisar y gestionar la solicitud:</div>
+                      <div style="text-align:center;margin-bottom:28px;">
+                        <a href="${reviewUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 10px 20px rgba(37,99,235,0.18);">Ver pre-registro</a>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:0 40px 32px;color:#94a3b8;font-size:12px;line-height:1.6;text-align:center;">
+                      Este correo fue generado automáticamente. No responda a este mensaje.
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>`;
 
         await sendEmail({ to: toList.join(','), subject, text, html });
       } catch (err) {
@@ -217,42 +245,65 @@ exports.update = async (req, res, next) => {
           `Bienvenido a nuestra comunidad académica.`;
 
         const html = `
-          <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
-            <div style="background-color: #051124; padding: 24px; text-align: center; color: #ffffff;">
-              <h2 style="margin: 0; color: #ffd100;">¡Pre-registro Aprobado!</h2>
-              <p style="margin: 4px 0 0 0; font-size: 0.9rem; color: #cbd5e1;">Portal Académico UPTNT</p>
-            </div>
-            <div style="padding: 24px; background-color: #ffffff; line-height: 1.6;">
-              <p>Estimado(a) <strong>${item.first_name} ${item.first_lastname}</strong>,</p>
-              <p>Nos complace informarte que tu solicitud de pre-registro ha sido <strong>verificada y aprobada</strong> por el equipo administrativo de nuestra institución.</p>
-              
-              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin: 20px 0;">
-                <h4 style="margin: 0 0 10px 0; color: #051124;">Tus credenciales de acceso creadas:</h4>
-                <table style="width: 100%; border-collapse: collapse;">
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:0;padding:0;width:100%;background:#f4f7fb;">
+            <tr>
+              <td align="center" style="padding:32px 16px;">
+                <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 12px 34px rgba(15,23,42,0.12);font-family:Arial,Helvetica,sans-serif;">
                   <tr>
-                    <td style="padding: 6px 0; color: #64748b; width: 40%;"><strong>Usuario:</strong></td>
-                    <td style="padding: 6px 0; color: #0f172a;"><code>${user.username}</code></td>
+                    <td style="background:linear-gradient(135deg,#0f172a,#2563eb);padding:32px 40px;color:#ffffff;text-align:center;">
+                      <div style="font-size:13px;letter-spacing:1.4px;text-transform:uppercase;opacity:0.9;margin-bottom:8px;">Portal Académico UPTNT</div>
+                      <div style="font-size:30px;line-height:1.2;font-weight:700;">¡Pre-registro Aprobado!</div>
+                      <div style="font-size:15px;line-height:1.6;margin-top:12px;opacity:0.95;">
+                        Tu solicitud ha sido verificada y aprobada exitosamente.
+                      </div>
+                    </td>
                   </tr>
                   <tr>
-                    <td style="padding: 6px 0; color: #64748b; width: 40%;"><strong>Contraseña Temporal:</strong></td>
-                    <td style="padding: 6px 0; color: #0f172a;"><code>${rawPassword}</code></td>
+                    <td style="padding:40px 40px 24px;color:#0f172a;">
+                      <div style="font-size:16px;line-height:1.7;margin-bottom:18px;">
+                        Estimado(a) <strong>${item.first_name} ${item.first_lastname}</strong>,
+                      </div>
+                      <div style="font-size:15px;line-height:1.7;color:#334155;margin-bottom:22px;">
+                        Nos complace informarte que tu solicitud de pre-registro ha sido <strong>verificada y aprobada</strong> por el equipo administrativo de nuestra institución.
+                      </div>
+
+                      <div style="background:#f8fafc;border:1px solid #dbeafe;border-radius:16px;padding:18px 20px;margin-bottom:26px;">
+                        <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:12px;">Tus credenciales de acceso creadas:</div>
+                        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                          <tr>
+                            <td style="padding:8px 10px;color:#64748b;font-weight:700;width:40%;border-bottom:1px solid #e2e8f0;">Usuario:</td>
+                            <td style="padding:8px 10px;color:#0f172a;border-bottom:1px solid #e2e8f0;"><code style="background:#e0e7ff;padding:2px 8px;border-radius:6px;font-size:13px;">${user.username}</code></td>
+                          </tr>
+                          <tr>
+                            <td style="padding:8px 10px;color:#64748b;font-weight:700;">Contraseña Temporal:</td>
+                            <td style="padding:8px 10px;color:#0f172a;"><code style="background:#e0e7ff;padding:2px 8px;border-radius:6px;font-size:13px;">${rawPassword}</code></td>
+                          </tr>
+                        </table>
+                      </div>
+
+                      <div style="background:#fff9db;border-left:4px solid #f5c400;padding:14px 18px;margin-bottom:26px;border-radius:8px;">
+                        <div style="font-size:14px;line-height:1.7;color:#664d03;">
+                          <strong>Aviso de seguridad:</strong> Se te ha asignado una contraseña temporal generada a partir de tus datos de registro. Para garantizar la confidencialidad de tu cuenta, por favor ingresa al portal académico y realiza el <strong>cambio de contraseña</strong> lo antes posible desde el módulo de tu perfil.
+                        </div>
+                      </div>
+
+                      <div style="font-size:15px;line-height:1.7;color:#334155;margin-bottom:22px;">
+                        Ya puedes iniciar sesión en el portal para continuar con tus procesos académicos e inscripciones.
+                      </div>
+                      <div style="font-size:15px;line-height:1.7;color:#334155;margin-top:24px;">
+                        Atentamente,<br/><strong style="color:#0f172a;">Departamento de Admisiones UPTNT</strong>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:0 40px 32px;color:#94a3b8;font-size:12px;line-height:1.6;text-align:center;">
+                      Este es un correo electrónico generado automáticamente. Por favor no respondas a esta dirección.
+                    </td>
                   </tr>
                 </table>
-              </div>
-
-              <div style="background-color: #fff9db; border-left: 4px solid #f5c400; padding: 12px; margin: 20px 0; border-radius: 4px;">
-                <p style="margin: 0; font-size: 0.9rem; color: #664d03;">
-                  <strong>Aviso de seguridad:</strong> Se te ha asignado una contraseña temporal generada a partir de tus datos de registro. Para garantizar la confidencialidad de tu cuenta, por favor ingresa al portal académico y realiza el <strong>cambio de contraseña</strong> lo antes posible desde el módulo de tu perfil.
-                </p>
-              </div>
-
-              <p>Ya puedes iniciar sesión en el portal para continuar con tus procesos académicos e inscripciones.</p>
-              <p style="margin-top: 24px;">Atentamente,<br/><strong>Departamento de Admisiones UPTNT</strong></p>
-            </div>
-            <div style="background-color: #f8fafc; padding: 16px; text-align: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid #e2e8f0;">
-              Este es un correo electrónico generado automáticamente. Por favor no respondas a esta dirección.
-            </div>
-          </div>
+              </td>
+            </tr>
+          </table>
         `;
 
         try {
