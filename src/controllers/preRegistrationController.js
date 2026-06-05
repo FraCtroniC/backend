@@ -1,11 +1,93 @@
+const { randomBytes } = require('crypto');
 const { PreRegistration, User, Role, State, Municipality, Parish, Career, Semester, Student } = require('../models');
 const { sendEmail } = require('../services/emailService');
 const config = require('../config/env');
 const { hashPassword } = require('../services/passwordService');
 
+async function generateVerificationCode() {
+  let code = '';
+  let existingItem = null;
+
+  do {
+    code = `PR-${randomBytes(4).toString('hex').toUpperCase()}`;
+    existingItem = await PreRegistration.findOne({ where: { verification_code: code } });
+  } while (existingItem);
+
+  return code;
+}
+
+function buildStyledEmail({ title, subtitle, intro, body, detailsTitle, detailsRows, ctaLabel, ctaUrl, closing }) {
+  const detailsHtml = detailsRows && detailsRows.length > 0
+    ? `
+                      <div style="background:#f8fafc;border:1px solid #dbeafe;border-radius:16px;padding:18px 20px;margin-bottom:26px;">
+                        <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:12px;">${detailsTitle}</div>
+                        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                          ${detailsRows.map((row, index) => `
+                          <tr>
+                            <td style="padding:8px 10px;color:#64748b;font-weight:700;width:40%;${index < detailsRows.length - 1 ? 'border-bottom:1px solid #e2e8f0;' : ''}">${row.label}</td>
+                            <td style="padding:8px 10px;color:#0f172a;${index < detailsRows.length - 1 ? 'border-bottom:1px solid #e2e8f0;' : ''}">${row.value}</td>
+                          </tr>`).join('')}
+                        </table>
+                      </div>`
+    : '';
+
+  const ctaHtml = ctaLabel && ctaUrl
+    ? `
+                      <div style="text-align:center;margin-bottom:28px;">
+                        <a href="${ctaUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 10px 20px rgba(37,99,235,0.18);">${ctaLabel}</a>
+                      </div>`
+    : '';
+
+  return `
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:0;padding:0;width:100%;background:#f4f7fb;">
+            <tr>
+              <td align="center" style="padding:32px 16px;">
+                <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 12px 34px rgba(15,23,42,0.12);font-family:Arial,Helvetica,sans-serif;">
+                  <tr>
+                    <td style="background:linear-gradient(135deg,#0f172a,#2563eb);padding:32px 40px;color:#ffffff;text-align:center;">
+                      <div style="font-size:13px;letter-spacing:1.4px;text-transform:uppercase;opacity:0.9;margin-bottom:8px;">Portal Académico UPTNT</div>
+                      <div style="font-size:30px;line-height:1.2;font-weight:700;">${title}</div>
+                      <div style="font-size:15px;line-height:1.6;margin-top:12px;opacity:0.95;">
+                        ${subtitle}
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:40px 40px 24px;color:#0f172a;">
+                      <div style="font-size:16px;line-height:1.7;margin-bottom:18px;">
+                        Estimado(a) <strong>${intro}</strong>,
+                      </div>
+                      <div style="font-size:15px;line-height:1.7;color:#334155;margin-bottom:22px;">
+                        ${body}
+                      </div>
+                      ${detailsHtml}
+                      ${ctaHtml}
+                      <div style="font-size:15px;line-height:1.7;color:#334155;margin-top:24px;">
+                        ${closing}
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:0 40px 32px;color:#94a3b8;font-size:12px;line-height:1.6;text-align:center;">
+                      Este es un correo electrónico generado automáticamente. Por favor no respondas a esta dirección.
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        `;
+}
+
 exports.list = async (req, res, next) => {
   try {
     const items = await PreRegistration.findAll({
+      where: {
+        [require('sequelize').Op.or]: [
+          { observations: null },
+          { observations: { [require('sequelize').Op.notLike]: '%[[SOFT_DELETED]]%' } },
+        ],
+      },
       include: [
         { model: State, attributes: ['id_state', 'name_state'] },
         { model: Municipality, attributes: ['id_municipality', 'name_municipality'] },
@@ -33,7 +115,7 @@ exports.get = async (req, res, next) => {
         { model: Semester, attributes: ['id_semester', 'number_semester'] }
       ]
     });
-    if (!item) {
+    if (!item || (item.observations || '').includes('[[SOFT_DELETED]]')) {
       return res.status(404).json({ message: 'Pre-registro no encontrado' });
     }
     res.json(item);
@@ -44,7 +126,11 @@ exports.get = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
-    const item = await PreRegistration.create(req.body);
+    const verificationCode = await generateVerificationCode();
+    const item = await PreRegistration.create({
+      ...req.body,
+      verification_code: verificationCode,
+    });
     res.status(201).json(item);
 
     // Notificar por correo a los administradores que hay un nuevo preregistro pendiente
@@ -89,16 +175,18 @@ exports.create = async (req, res, next) => {
           .filter(Boolean)
           .join(' ');
 
+        const publicCode = item.verification_code;
+
         const reviewUrl = (config && config.frontendUrl)
           ? `${config.frontendUrl}/admin/pre-registrations/${item.id_pre}`
           : `#/admin/pre-registrations/${item.id_pre}`;
 
-        const subject = `Nuevo pre-registro pendiente (#${item.id_pre})`;
+        const subject = `Nuevo pre-registro pendiente (${publicCode})`;
 
         const text = `Se ha recibido un nuevo pre-registro.\n\n` +
           `Aspirante: ${aspirantName || 'N/D'}\n` +
           `Documento: ${item.document_type}-${item.document_id}\n` +
-          `ID pre-registro: ${item.id_pre}\n\n` +
+          `Código de pre-registro: ${publicCode}\n\n` +
           `Revisa el preregistro: ${reviewUrl}`;
 
         const html = `
@@ -132,8 +220,8 @@ exports.create = async (req, res, next) => {
                             <td style="padding:8px 10px;color:#0f172a;border-bottom:1px solid #e2e8f0;">${item.document_type}-${item.document_id}</td>
                           </tr>
                           <tr>
-                            <td style="padding:8px 10px;color:#64748b;font-weight:700;">ID</td>
-                            <td style="padding:8px 10px;color:#0f172a;">${item.id_pre}</td>
+                            <td style="padding:8px 10px;color:#64748b;font-weight:700;">Código</td>
+                            <td style="padding:8px 10px;color:#0f172a;">${publicCode}</td>
                           </tr>
                         </table>
                       </div>
@@ -237,80 +325,63 @@ exports.update = async (req, res, next) => {
       if (createdNewUser && item.email) {
         // Enviar correo de aceptación con credenciales
         const subject = 'Pre-registro Aprobado - Portal UPTNT';
-        const text = `¡Felicidades, ${item.first_name}! Tu solicitud de pre-registro en la UPTNT ha sido Aprobada.\n\n` +
+        const text = `¡Felicidades, ${item.first_name}! Tu solicitud de pre-registro en la UPTNT ha sido aprobada.\n\n` +
           `Hemos creado tu cuenta de acceso al Portal Académico:\n` +
           `- Usuario: ${user.username}\n` +
           `- Contraseña Temporal: ${rawPassword}\n\n` +
           `Por razones de seguridad, te sugerimos ingresar al portal y cambiar esta contraseña estándar a la brevedad.\n\n` +
           `Bienvenido a nuestra comunidad académica.`;
-
-        const html = `
-          <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:0;padding:0;width:100%;background:#f4f7fb;">
-            <tr>
-              <td align="center" style="padding:32px 16px;">
-                <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 12px 34px rgba(15,23,42,0.12);font-family:Arial,Helvetica,sans-serif;">
-                  <tr>
-                    <td style="background:linear-gradient(135deg,#0f172a,#2563eb);padding:32px 40px;color:#ffffff;text-align:center;">
-                      <div style="font-size:13px;letter-spacing:1.4px;text-transform:uppercase;opacity:0.9;margin-bottom:8px;">Portal Académico UPTNT</div>
-                      <div style="font-size:30px;line-height:1.2;font-weight:700;">¡Pre-registro Aprobado!</div>
-                      <div style="font-size:15px;line-height:1.6;margin-top:12px;opacity:0.95;">
-                        Tu solicitud ha sido verificada y aprobada exitosamente.
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding:40px 40px 24px;color:#0f172a;">
-                      <div style="font-size:16px;line-height:1.7;margin-bottom:18px;">
-                        Estimado(a) <strong>${item.first_name} ${item.first_lastname}</strong>,
-                      </div>
-                      <div style="font-size:15px;line-height:1.7;color:#334155;margin-bottom:22px;">
-                        Nos complace informarte que tu solicitud de pre-registro ha sido <strong>verificada y aprobada</strong> por el equipo administrativo de nuestra institución.
-                      </div>
-
-                      <div style="background:#f8fafc;border:1px solid #dbeafe;border-radius:16px;padding:18px 20px;margin-bottom:26px;">
-                        <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:12px;">Tus credenciales de acceso creadas:</div>
-                        <table style="width:100%;border-collapse:collapse;font-size:14px;">
-                          <tr>
-                            <td style="padding:8px 10px;color:#64748b;font-weight:700;width:40%;border-bottom:1px solid #e2e8f0;">Usuario:</td>
-                            <td style="padding:8px 10px;color:#0f172a;border-bottom:1px solid #e2e8f0;"><code style="background:#e0e7ff;padding:2px 8px;border-radius:6px;font-size:13px;">${user.username}</code></td>
-                          </tr>
-                          <tr>
-                            <td style="padding:8px 10px;color:#64748b;font-weight:700;">Contraseña Temporal:</td>
-                            <td style="padding:8px 10px;color:#0f172a;"><code style="background:#e0e7ff;padding:2px 8px;border-radius:6px;font-size:13px;">${rawPassword}</code></td>
-                          </tr>
-                        </table>
-                      </div>
-
-                      <div style="background:#fff9db;border-left:4px solid #f5c400;padding:14px 18px;margin-bottom:26px;border-radius:8px;">
-                        <div style="font-size:14px;line-height:1.7;color:#664d03;">
-                          <strong>Aviso de seguridad:</strong> Se te ha asignado una contraseña temporal generada a partir de tus datos de registro. Para garantizar la confidencialidad de tu cuenta, por favor ingresa al portal académico y realiza el <strong>cambio de contraseña</strong> lo antes posible desde el módulo de tu perfil.
-                        </div>
-                      </div>
-
-                      <div style="font-size:15px;line-height:1.7;color:#334155;margin-bottom:22px;">
-                        Ya puedes iniciar sesión en el portal para continuar con tus procesos académicos e inscripciones.
-                      </div>
-                      <div style="font-size:15px;line-height:1.7;color:#334155;margin-top:24px;">
-                        Atentamente,<br/><strong style="color:#0f172a;">Departamento de Admisiones UPTNT</strong>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding:0 40px 32px;color:#94a3b8;font-size:12px;line-height:1.6;text-align:center;">
-                      Este es un correo electrónico generado automáticamente. Por favor no respondas a esta dirección.
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        `;
+        const html = buildStyledEmail({
+          title: '¡Pre-registro Aprobado!',
+          subtitle: 'Tu solicitud ha sido verificada y aprobada exitosamente.',
+          intro: `${item.first_name} ${item.first_lastname}`,
+          body: 'Nos complace informarte que tu solicitud de pre-registro ha sido <strong>verificada y aprobada</strong> por el equipo administrativo de nuestra institución.',
+          detailsTitle: 'Tus credenciales de acceso creadas',
+          detailsRows: [
+            { label: 'Usuario', value: `<code style="background:#e0e7ff;padding:2px 8px;border-radius:6px;font-size:13px;">${user.username}</code>` },
+            { label: 'Contraseña Temporal', value: `<code style="background:#e0e7ff;padding:2px 8px;border-radius:6px;font-size:13px;">${rawPassword}</code>` },
+          ],
+          ctaLabel: null,
+          ctaUrl: null,
+          closing: 'Ya puedes iniciar sesión en el portal para continuar con tus procesos académicos e inscripciones.<br/><br/>Atentamente,<br/><strong style="color:#0f172a;">Departamento de Admisiones UPTNT</strong>',
+        });
 
         try {
           await sendEmail({ to: item.email, subject, text, html });
         } catch (mailErr) {
           console.error('Error enviando correo de aprobacion a aspirante:', mailErr.message || mailErr);
         }
+      }
+    }
+
+    if (newStatus === 'Rechazado' && oldStatus !== 'Rechazado' && item.email) {
+      const subject = 'Actualización de pre-registro - Portal UPTNT';
+      const text = `Estimado(a) ${item.first_name} ${item.first_lastname}:\n\n` +
+        `Hemos revisado tu solicitud de pre-registro y, en esta oportunidad, no ha podido ser aprobada.\n\n` +
+        `Código de pre-registro: ${item.verification_code || `PR-${String(item.id_pre).padStart(6, '0')}`}\n` +
+        `Estado actual: Rechazado\n\n` +
+        `Te invitamos a verificar los datos suministrados y, si corresponde, realizar un nuevo proceso de postulación en el periodo habilitado.\n\n` +
+        `Atentamente,\nDepartamento de Admisiones UPTNT`;
+
+      const html = buildStyledEmail({
+        title: 'Actualización de pre-registro',
+        subtitle: 'Tu solicitud fue revisada por nuestro equipo administrativo.',
+        intro: `${item.first_name} ${item.first_lastname}`,
+        body: 'Hemos revisado tu solicitud de pre-registro y, en esta oportunidad, no ha podido ser aprobada.',
+        detailsTitle: 'Detalles de la solicitud',
+        detailsRows: [
+          { label: 'Código de pre-registro', value: item.verification_code || `PR-${String(item.id_pre).padStart(6, '0')}` },
+          { label: 'Estado actual', value: 'Rechazado' },
+        ],
+        ctaLabel: null,
+        ctaUrl: null,
+        closing: 'Te invitamos a verificar los datos suministrados y, si corresponde, realizar un nuevo proceso de postulación en el periodo habilitado.<br/><br/>Atentamente,<br/><strong style="color:#0f172a;">Departamento de Admisiones UPTNT</strong>',
+      });
+
+      try {
+        await sendEmail({ to: item.email, subject, text, html });
+      } catch (mailErr) {
+        console.error('Error enviando correo de rechazo a aspirante:', mailErr.message || mailErr);
       }
     }
 
@@ -327,7 +398,16 @@ exports.remove = async (req, res, next) => {
       return res.status(404).json({ message: 'Pre-registro no encontrado' });
     }
 
-    await item.destroy();
+    const currentObservations = item.observations ? String(item.observations).trim() : '';
+    const softDeleteMarker = '[[SOFT_DELETED]]';
+    const nextObservations = currentObservations
+      ? `${currentObservations}\n${softDeleteMarker}`
+      : softDeleteMarker;
+
+    await item.update({
+      status_pre: 'Rechazado',
+      observations: nextObservations,
+    });
     res.status(204).end();
   } catch (err) {
     next(err);
