@@ -1,6 +1,11 @@
-*** Begin Patch
-*** Update File: node_modules/@apidevtools/json-schema-ref-parser/lib/util/url.js
-@@
+diff --git a/node_modules/@apidevtools/json-schema-ref-parser/lib/util/url.js b/node_modules/@apidevtools/json-schema-ref-parser/lib/util/url.js
+index 81b3a0d..a615844 100644
+--- a/node_modules/@apidevtools/json-schema-ref-parser/lib/util/url.js
++++ b/node_modules/@apidevtools/json-schema-ref-parser/lib/util/url.js
+@@ -22,8 +22,57 @@ let urlDecodePatterns = [
+   /\%40/g, "@"
+ ];
+ 
 -exports.parse = require("url").parse;
 -exports.resolve = require("url").resolve;
 +// Use the WHATWG URL API instead of the legacy `url.parse` / `url.resolve`.
@@ -54,4 +59,6 @@
 +    return String(relative);
 +  }
 +};
-*** End Patch
+ 
+ /**
+  * Returns the current working directory (in Node) or the current page URL (in browsers).
