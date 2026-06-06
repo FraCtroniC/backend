@@ -136,18 +136,10 @@ exports.create = async (req, res, next) => {
     // Notificar por correo a los administradores que hay un nuevo preregistro pendiente
     (async () => {
       try {
-        let toList = [];
+        const emailSet = new Set();
 
-        // 1) Preferir lista de correos desde la variable de entorno ADMIN_NOTIFICATION_EMAILS
-        if (config && config.adminNotificationEmails) {
-          toList = config.adminNotificationEmails
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean);
-        }
-
-        // 2) Si no hay lista en env, consultar usuarios con rol Admin en la BD
-        if (toList.length === 0) {
+        // 1) Consultar usuarios con rol Admin en la BD
+        try {
           const admins = await User.findAll({
             include: [
               {
@@ -160,9 +152,25 @@ exports.create = async (req, res, next) => {
               email: { [require('sequelize').Op.ne]: null },
             },
           });
-
-          toList = admins.map((a) => a.email).filter(Boolean);
+          admins.forEach((a) => {
+            if (a.email) {
+              emailSet.add(a.email.trim().toLowerCase());
+            }
+          });
+        } catch (dbErr) {
+          console.error('Error buscando admins en la BD para notificacion:', dbErr.message || dbErr);
         }
+
+        // 2) Incluir lista de correos adicionales desde la variable de entorno ADMIN_NOTIFICATION_EMAILS
+        if (config && config.adminNotificationEmails) {
+          config.adminNotificationEmails
+            .split(',')
+            .map((s) => s.trim().toLowerCase())
+            .filter(Boolean)
+            .forEach((email) => emailSet.add(email));
+        }
+
+        const toList = Array.from(emailSet);
 
         if (toList.length === 0) return;
 
