@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { User, Role } = require('../models');
+const { User, Role, Student, Teacher, Career, sequelize } = require('../models');
 const { signAccessToken } = require('../services/jwtService');
 const config = require('../config/env');
 const { hashPassword, verifyPassword } = require('../services/passwordService');
@@ -11,6 +11,21 @@ const {
 
 function toSafeUser(userInstance) {
   const user = userInstance.get({ plain: true });
+  
+  user.career = '';
+  user.period = '2026-II';
+  user.cum = 0;
+  
+  if (user.Student) {
+    user.career = user.Student.Career?.name_career || '';
+    user.cum = 16.45;
+  }
+  
+  if (user.Teacher) {
+    user.academic_title = user.Teacher.academic_grade || '';
+    user.expertise = user.Teacher.profession || 'Pendiente de asignación';
+  }
+
   delete user.password_hash;
   return user;
 }
@@ -74,6 +89,7 @@ function issueToken(req, res, next) {
 }
 
 async function register(req, res, next) {
+  const t = await sequelize.transaction();
   try {
     const {
       id_role,
@@ -88,16 +104,21 @@ async function register(req, res, next) {
       phone,
       date_birth,
       status,
+      career,
+      academic_grade,
+      profession,
     } = req.body;
 
     const existingUser = await ensureUniqueUser({ username, email, document_id });
     if (existingUser) {
+      await t.rollback();
       return res.status(409).json({ message: 'El usuario, correo o documento ya existe' });
     }
 
     if (id_role != null) {
-      const role = await Role.findByPk(id_role);
+      const role = await Role.findByPk(id_role, { transaction: t });
       if (!role) {
+        await t.rollback();
         return res.status(400).json({ message: 'El rol indicado no existe' });
       }
     }
@@ -115,10 +136,78 @@ async function register(req, res, next) {
       phone,
       date_birth,
       status: status || 'Activo',
+    }, { transaction: t });
+
+    // Determine role name
+    let resolvedRoleName = '';
+    if (user.id_role) {
+      const roleRecord = await Role.findByPk(user.id_role, { transaction: t });
+      if (roleRecord) {
+        resolvedRoleName = roleRecord.name_role;
+      }
+    }
+
+    // Associate with Student or Teacher
+    if (resolvedRoleName === 'Estudiante') {
+      let resolvedCareerId = null;
+      if (career) {
+        if (!isNaN(Number(career))) {
+          resolvedCareerId = Number(career);
+        } else {
+          const foundCareer = await Career.findOne({
+            where: {
+              name_career: {
+                [Op.iLike]: `%${career.trim()}%`
+              }
+            },
+            transaction: t
+          });
+          if (foundCareer) {
+            resolvedCareerId = foundCareer.id_career;
+          }
+        }
+      }
+
+      if (!resolvedCareerId) {
+        const firstCareer = await Career.findOne({ order: [['id_career', 'ASC']], transaction: t });
+        if (firstCareer) {
+          resolvedCareerId = firstCareer.id_career;
+        }
+      }
+
+      await Student.create({
+        id_user: user.id_user,
+        id_career: resolvedCareerId || 1,
+        id_semester: 1,
+        status: 'Regular',
+        admission_date: new Date()
+      }, { transaction: t });
+    } else if (resolvedRoleName === 'Docente') {
+      await Teacher.create({
+        id_user: user.id_user,
+        academic_grade: academic_grade || 'Licenciado',
+        profession: profession || 'Docente'
+      }, { transaction: t });
+    }
+
+    await t.commit();
+
+    // Reload user with Student and Career to include it in the response
+    const reloadedUser = await User.findByPk(user.id_user, {
+      include: [
+        {
+          model: Student,
+          include: [Career]
+        },
+        {
+          model: Teacher
+        }
+      ]
     });
 
-    return res.status(201).json(buildAuthResponse(user));
+    return res.status(201).json(buildAuthResponse(reloadedUser || user));
   } catch (error) {
+    await t.rollback();
     return next(error);
   }
 }
@@ -127,7 +216,18 @@ async function login(req, res, next) {
   try {
     const { username, password } = req.body;
 
-    const user = await User.findOne({ where: { username } });
+    const user = await User.findOne({
+      where: { username },
+      include: [
+        {
+          model: Student,
+          include: [Career]
+        },
+        {
+          model: Teacher
+        }
+      ]
+    });
     if (!user) {
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
@@ -210,11 +310,20 @@ async function profile(req, res, next) {
         'first_lastname',
         'second_lastname',
         'id_role',
+        'document_id',
+        'date_birth',
       ],
       include: [
         {
           model: Role,
           attributes: ['id_role', 'name_role'],
+        },
+        {
+          model: Student,
+          include: [Career],
+        },
+        {
+          model: Teacher,
         },
       ],
     });
@@ -236,6 +345,13 @@ async function profile(req, res, next) {
       name: data.first_name,
       lastname: data.first_lastname,
       role: data.Role?.name_role ?? null,
+      career: data.Student?.Career?.name_career ?? '',
+      academic_title: data.Teacher?.academic_grade ?? '',
+      expertise: data.Teacher?.profession ?? '',
+      document_id: data.document_id,
+      date_birth: data.date_birth,
+      cum: data.Student ? 16.45 : 0,
+      academicStatus: data.Student?.status ?? '',
     });
   } catch (error) {
     return next(error);
@@ -278,11 +394,20 @@ async function profileUpdate(req, res, next) {
         'first_lastname',
         'second_lastname',
         'id_role',
+        'document_id',
+        'date_birth',
       ],
       include: [
         {
           model: Role,
           attributes: ['id_role', 'name_role'],
+        },
+        {
+          model: Student,
+          include: [Career],
+        },
+        {
+          model: Teacher,
         },
       ],
     });
@@ -300,6 +425,13 @@ async function profileUpdate(req, res, next) {
       name: data.first_name,
       lastname: data.first_lastname,
       role: data.Role?.name_role ?? null,
+      career: data.Student?.Career?.name_career ?? '',
+      academic_title: data.Teacher?.academic_grade ?? '',
+      expertise: data.Teacher?.profession ?? '',
+      document_id: data.document_id,
+      date_birth: data.date_birth,
+      cum: data.Student ? 16.45 : 0,
+      academicStatus: data.Student?.status ?? '',
     });
   } catch (error) {
     return next(error);

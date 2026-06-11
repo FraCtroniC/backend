@@ -48,6 +48,9 @@ const userCreateSchema = z
     phone: z.string().trim().max(25).optional(),
     date_birth: z.string().optional().or(z.null()),
     status: userStatusSchema.optional(),
+    career: z.string().optional().nullable(),
+    academic_grade: z.string().optional().nullable(),
+    profession: z.string().optional().nullable(),
   })
   .strict()
   .transform(mapLegacyNameFields)
@@ -221,6 +224,9 @@ const authRegisterSchema = z
     date_birth: z.string().optional().or(z.null()),
     phone: z.string().trim().max(25).optional(),
     status: userStatusSchema.optional(),
+    career: z.string().optional().nullable(),
+    academic_grade: z.string().optional().nullable(),
+    profession: z.string().optional().nullable(),
   })
   .strict()
   .transform(mapLegacyNameFields)

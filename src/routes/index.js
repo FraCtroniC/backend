@@ -24,6 +24,8 @@ const municipalityRoutes = require('./municipalityRoutes');
 const parishRoutes = require('./parishRoutes');
 const preRegistrationRoutes = require('./preRegistrationRoutes');
 const preDocumentRoutes = require('./preDocumentRoutes');
+const dashboardRoutes = require('./dashboardRoutes');
+
 
 router.get('/', health.ping);
 router.use('/auth', authRoutes);
@@ -48,5 +50,7 @@ router.use('/municipalities', municipalityRoutes);
 router.use('/parishes', parishRoutes);
 router.use('/pre-registrations', preRegistrationRoutes);
 router.use('/pre-documents', preDocumentRoutes);
+router.use('/dashboard', dashboardRoutes);
+
 
 module.exports = router;
