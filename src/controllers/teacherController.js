@@ -1,10 +1,13 @@
 /** Controlador REST de docentes. */
-const { Teacher } = require('../models');
+const { Teacher, User } = require('../models');
 
 // 1. Listar todos los profesores
 exports.list = async (req, res, next) => {
     try {
-        const teachers = await Teacher.findAll({ limit: 50 });
+        const teachers = await Teacher.findAll({ 
+            include: [{ model: User }],
+            limit: 50 
+        });
         res.json(teachers);
     } catch (err) {
         next(err);

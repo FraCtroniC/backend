@@ -1,10 +1,19 @@
 /** Controlador REST de secciones. */
-const { Section } = require('../models');
+const { Section, Career, Subject, Teacher, User, AcademicPeriod } = require('../models');
+
+// Helper to include associations
+const includeAssociations = [
+  { model: Career },
+  { model: Subject },
+  { model: AcademicPeriod },
+  { model: Teacher, include: [{ model: User }] }
+];
 
 // 1. Listar todas las secciones
 exports.list = async (req, res, next) => {
   try {
     const sections = await Section.findAll({ 
+      include: includeAssociations,
       order: [['section_code', 'ASC']] 
     });
     res.json(sections);
@@ -16,7 +25,9 @@ exports.list = async (req, res, next) => {
 // 2. Obtener una sección por ID
 exports.get = async (req, res, next) => {
   try {
-    const section = await Section.findByPk(req.params.id);
+    const section = await Section.findByPk(req.params.id, {
+      include: includeAssociations
+    });
     if (!section) {
       return res.status(404).json({ message: 'Sección no encontrada' });
     }
@@ -33,6 +44,7 @@ exports.create = async (req, res, next) => {
       id_period, 
       id_subject, 
       id_teacher, 
+      id_career,
       section_code, 
       quota_max, 
       classroom, 
@@ -43,13 +55,18 @@ exports.create = async (req, res, next) => {
       id_period, 
       id_subject, 
       id_teacher, 
+      id_career,
       section_code, 
       quota_max, 
       classroom, 
       schedule_info 
     });
     
-    res.status(201).json(newSection);
+    const populated = await Section.findByPk(newSection.id_section, {
+      include: includeAssociations
+    });
+
+    res.status(201).json(populated);
   } catch (err) { 
     next(err); 
   }
@@ -67,6 +84,7 @@ exports.update = async (req, res, next) => {
       id_period, 
       id_subject, 
       id_teacher, 
+      id_career,
       section_code, 
       quota_max, 
       classroom, 
@@ -77,13 +95,18 @@ exports.update = async (req, res, next) => {
       id_period, 
       id_subject, 
       id_teacher, 
+      id_career,
       section_code, 
       quota_max, 
       classroom, 
       schedule_info 
     });
 
-    res.json(section);
+    const populated = await Section.findByPk(section.id_section, {
+      include: includeAssociations
+    });
+
+    res.json(populated);
   } catch (err) { 
     next(err); 
   }

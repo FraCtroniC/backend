@@ -50,6 +50,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(100),
       allowNull: true
     },
+    id_career: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'career',
+        key: 'id_career'
+      }
+    },
   }, {
     tableName: 'section',
     timestamps: false,

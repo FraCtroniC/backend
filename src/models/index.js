@@ -47,6 +47,9 @@ Section.belongsTo(Teacher, { foreignKey: 'id_teacher' });
 AcademicPeriod.hasMany(Section, { foreignKey: 'id_period' });
 Section.belongsTo(AcademicPeriod, { foreignKey: 'id_period' });
 
+Career.hasMany(Section, { foreignKey: 'id_career' });
+Section.belongsTo(Career, { foreignKey: 'id_career' });
+
 Student.belongsTo(User, { foreignKey: 'id_user' });
 User.hasOne(Student, { foreignKey: 'id_user' });
 

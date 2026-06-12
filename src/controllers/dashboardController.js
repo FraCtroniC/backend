@@ -272,11 +272,12 @@ exports.getStudentDashboard = async (req, res, next) => {
     });
 
     if (!student) {
+      const user = await User.findByPk(userId);
       // Graceful fallback for demo student data
       return res.json({
         profile: {
-          name: 'Ana',
-          lastname: 'García',
+          name: user?.first_name || 'Ana',
+          lastname: user?.first_lastname || 'García',
           career: 'Informática',
           faculty: 'Facultad de Ingeniería',
           director: 'Dra. Helena Pirela',

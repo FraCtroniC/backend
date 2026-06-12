@@ -345,13 +345,13 @@ async function profile(req, res, next) {
       name: data.first_name,
       lastname: data.first_lastname,
       role: data.Role?.name_role ?? null,
-      career: data.Student?.Career?.name_career ?? '',
+      career: data.Student?.Career?.name_career ?? (data.Role?.name_role === 'Estudiante' ? 'Informática' : ''),
       academic_title: data.Teacher?.academic_grade ?? '',
       expertise: data.Teacher?.profession ?? '',
       document_id: data.document_id,
       date_birth: data.date_birth,
-      cum: data.Student ? 16.45 : 0,
-      academicStatus: data.Student?.status ?? '',
+      cum: data.Student ? 16.45 : (data.Role?.name_role === 'Estudiante' ? 16.45 : 0),
+      academicStatus: data.Student?.status ?? (data.Role?.name_role === 'Estudiante' ? 'Regular' : ''),
     });
   } catch (error) {
     return next(error);
