@@ -38,6 +38,12 @@ PensumSubject.belongsTo(Subject, { foreignKey: 'id_subject' });
 Semester.hasMany(PensumSubject, { foreignKey: 'id_semester' });
 PensumSubject.belongsTo(Semester, { foreignKey: 'id_semester' });
 
+PensumSubject.hasMany(SubjectPrerequisite, { foreignKey: 'id_pensum_subject', as: 'Prerequisites' });
+SubjectPrerequisite.belongsTo(PensumSubject, { foreignKey: 'id_pensum_subject', as: 'PensumSubject' });
+
+PensumSubject.hasMany(SubjectPrerequisite, { foreignKey: 'id_required_pensum_subject', as: 'RequiredPrerequisites' });
+SubjectPrerequisite.belongsTo(PensumSubject, { foreignKey: 'id_required_pensum_subject', as: 'RequiredPensumSubject' });
+
 Subject.hasMany(Section, { foreignKey: 'id_subject' });
 Section.belongsTo(Subject, { foreignKey: 'id_subject' });
 

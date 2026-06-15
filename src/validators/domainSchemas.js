@@ -327,8 +327,13 @@ const subjectCreateSchema = z
     code_subject: z.string().trim().min(2).max(20),
     name_subject: z.string().trim().min(3).max(100),
     credit_units: z.coerce.number().int().min(1).max(20),
+    id_pensum: z.coerce.number().int().positive().optional(),
+    id_semester: z.coerce.number().int().positive().optional(),
+    id_prerequisite_pensum_subject: z.coerce.number().int().positive().optional(),
+    id_prerequisites: z.array(z.coerce.number().int().positive()).optional(),
   })
   .strict();
+
 
 const subjectUpdateSchema = subjectCreateSchema
   .partial()

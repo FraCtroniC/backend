@@ -1,5 +1,5 @@
 /** Controlador REST de materias. */
-const { Subject } = require('../models');
+const { Subject, PensumSubject, Pensum, Career, SubjectPrerequisite } = require('../models');
 
 // 1. Listar todas las materias
 exports.list = async (req, res, next) => {
@@ -27,16 +27,100 @@ exports.get = async (req, res, next) => {
 // 3. Crear materia (POST)
 exports.create = async (req, res, next) => {
   try {
-    // Aquí usamos tus campos exactos
-    const { code_subject, name_subject, credit_units } = req.body;
+    const { code_subject, name_subject, credit_units, id_pensum, id_semester, id_prerequisite_pensum_subject, id_prerequisites } = req.body;
     
-    const newSubject = await Subject.create({ 
-      code_subject, 
-      name_subject, 
-      credit_units 
+    // 1. Buscar si ya existe la materia a nivel global (por su código único)
+    let subject = await Subject.findOne({ where: { code_subject } });
+    
+    if (!subject) {
+      subject = await Subject.create({ 
+        code_subject, 
+        name_subject, 
+        credit_units 
+      });
+    }
+    
+    let pensumSubject = null;
+    
+    // 2. Si se especifica pensum y semestre, registrar la relación en pensum_subject
+    if (id_pensum && id_semester) {
+      const pensum = await Pensum.findByPk(id_pensum, {
+        include: [{ model: Career }]
+      });
+      
+      if (!pensum) {
+        return res.status(404).json({ message: 'Pensum no encontrado' });
+      }
+      
+      const careerCode = pensum.Career ? pensum.Career.code_career : 'CAR';
+      const combinedCode = `${careerCode}-${code_subject}`;
+      
+      // Validar si ya existe esta asociación específica materia-pensum
+      const existingRelation = await PensumSubject.findOne({
+        where: {
+          id_pensum,
+          id_subject: subject.id_subject
+        }
+      });
+      
+      if (existingRelation) {
+        return res.status(400).json({ message: 'La materia ya está asociada a este pensum' });
+      }
+      
+      // Validar si el código combinado ya está en uso en este pensum
+      const existingCodeRelation = await PensumSubject.findOne({
+        where: {
+          id_pensum,
+          code_subject: combinedCode
+        }
+      });
+      
+      if (existingCodeRelation) {
+        return res.status(400).json({ message: `El código ${combinedCode} ya está en uso en este pensum` });
+      }
+      
+      pensumSubject = await PensumSubject.create({
+        id_pensum,
+        id_subject: subject.id_subject,
+        id_semester,
+        code_subject: combinedCode
+      });
+
+      // 3. Registrar prerrequisitos (individuales o múltiples)
+      const prereqIds = [];
+      if (id_prerequisite_pensum_subject) {
+        prereqIds.push(Number(id_prerequisite_pensum_subject));
+      }
+      if (Array.isArray(id_prerequisites)) {
+        id_prerequisites.forEach((id) => {
+          const numId = Number(id);
+          if (numId && !prereqIds.includes(numId)) {
+            prereqIds.push(numId);
+          }
+        });
+      }
+
+      for (const reqId of prereqIds) {
+        const exists = await SubjectPrerequisite.findOne({
+          where: {
+            id_pensum_subject: pensumSubject.id_pensum_subject,
+            id_required_pensum_subject: reqId
+          }
+        });
+        if (!exists) {
+          await SubjectPrerequisite.create({
+            id_pensum_subject: pensumSubject.id_pensum_subject,
+            id_required_pensum_subject: reqId
+          });
+        }
+      }
+    }
+    
+    // Devolvemos el subject creado/reutilizado y la relación si se creó
+    res.status(201).json({
+      ...subject.toJSON(),
+      pensumSubject
     });
-    
-    res.status(201).json(newSubject);
   } catch (err) { 
     next(err); 
   }

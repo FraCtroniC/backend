@@ -1,10 +1,33 @@
 /** Controlador REST de pensums. */
-const { Pensum } = require('../models');
+const { Pensum, Career, PensumSubject, Subject, Semester, SubjectPrerequisite } = require('../models');
 
 // 1. Listar todos los pensum
 exports.list = async (req, res, next) => {
   try {
     const items = await Pensum.findAll({ 
+      include: [
+        {
+          model: Career
+        },
+        {
+          model: PensumSubject,
+          include: [
+            Subject, 
+            Semester,
+            {
+              model: SubjectPrerequisite,
+              as: 'Prerequisites',
+              include: [
+                {
+                  model: PensumSubject,
+                  as: 'RequiredPensumSubject',
+                  include: [Subject]
+                }
+              ]
+            }
+          ]
+        }
+      ],
       order: [['id_pensum', 'ASC']] 
     });
     res.json(items);
@@ -16,7 +39,31 @@ exports.list = async (req, res, next) => {
 // 2. Obtener un pensum por ID
 exports.get = async (req, res, next) => {
   try {
-    const item = await Pensum.findByPk(req.params.id);
+    const item = await Pensum.findByPk(req.params.id, {
+      include: [
+        {
+          model: Career
+        },
+        {
+          model: PensumSubject,
+          include: [
+            Subject, 
+            Semester,
+            {
+              model: SubjectPrerequisite,
+              as: 'Prerequisites',
+              include: [
+                {
+                  model: PensumSubject,
+                  as: 'RequiredPensumSubject',
+                  include: [Subject]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
     if (!item) {
       return res.status(404).json({ message: 'Pensum no encontrado' });
     }

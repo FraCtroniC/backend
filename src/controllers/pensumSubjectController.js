@@ -1,5 +1,6 @@
 /** Controlador REST de materias por pensum. */
-const { PensumSubject } = require('../models');
+const { PensumSubject, SubjectPrerequisite } = require('../models');
+const { Op } = require('sequelize');
 
 // 1. Listar todas las materias de los pensum
 exports.list = async (req, res, next) => {
@@ -76,6 +77,16 @@ exports.remove = async (req, res, next) => {
       return res.status(404).json({ message: 'Relación no encontrada' });
     }
     
+    // Eliminar las prelaciones asociadas para evitar conflictos de clave foránea
+    await SubjectPrerequisite.destroy({
+      where: {
+        [Op.or]: [
+          { id_pensum_subject: item.id_pensum_subject },
+          { id_required_pensum_subject: item.id_pensum_subject }
+        ]
+      }
+    });
+
     await item.destroy();
     res.status(204).end();
   } catch (err) { 
