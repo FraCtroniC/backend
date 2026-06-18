@@ -117,6 +117,11 @@ async function requestPasswordReset({
     subject: 'Recuperacion de contrasena',
     text: buildPasswordResetEmailText(user.first_name || user.name, user.username, resetUrl),
     html: buildPasswordResetEmailHtml(user.first_name || user.name, user.username, resetUrl),
+    emailType: 'reset_password',
+    emailParams: {
+      displayName: user.first_name || user.name || user.username || 'usuario',
+      resetUrl,
+    },
   });
 
   return {

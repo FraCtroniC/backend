@@ -24,7 +24,7 @@ const schema = Joi.object({
   JWT_EXPIRES_IN: Joi.string().default('1h'),
   PASSWORD_RESET_TOKEN_EXPIRES_IN: Joi.string().default('30m'),
 
-  EMAIL_TRANSPORT: Joi.string().valid('log', 'smtp').default('log'),
+  EMAIL_TRANSPORT: Joi.string().valid('log', 'smtp', 'emailjs').default('log'),
   EMAIL_FROM: Joi.string().email().default('no-reply@example.com'),
   ADMIN_NOTIFICATION_EMAILS: Joi.string().allow('').optional(),
   SMTP_HOST: Joi.string().when('EMAIL_TRANSPORT', { is: 'smtp', then: Joi.required() }),
@@ -32,7 +32,13 @@ const schema = Joi.object({
   SMTP_SECURE: Joi.boolean().default(false),
   SMTP_USER: Joi.string().when('EMAIL_TRANSPORT', { is: 'smtp', then: Joi.required() }),
   SMTP_PASS: Joi.string().when('EMAIL_TRANSPORT', { is: 'smtp', then: Joi.required() }),
+  EMAILJS_SERVICE_ID: Joi.string().when('EMAIL_TRANSPORT', { is: 'emailjs', then: Joi.required() }),
+  EMAILJS_PUBLIC_KEY: Joi.string().when('EMAIL_TRANSPORT', { is: 'emailjs', then: Joi.required() }),
+  EMAILJS_PRIVATE_KEY: Joi.string().when('EMAIL_TRANSPORT', { is: 'emailjs', then: Joi.required() }),
+  EMAILJS_TEMPLATE_ID_ADMIN: Joi.string().when('EMAIL_TRANSPORT', { is: 'emailjs', then: Joi.required() }),
+  EMAILJS_TEMPLATE_ID_CUENTA: Joi.string().when('EMAIL_TRANSPORT', { is: 'emailjs', then: Joi.required() }),
   FRONTEND_URL: Joi.string().uri().default('http://localhost:5173'),
+  WEBSITE_URL: Joi.string().uri().default('http://localhost:5174'),
 }).unknown();
 
 const { value: envVars, error } = schema.validate(process.env);
@@ -68,6 +74,14 @@ module.exports = {
     smtpUser: envVars.SMTP_USER,
     smtpPass: envVars.SMTP_PASS,
   },
+  emailjs: {
+    serviceId: envVars.EMAILJS_SERVICE_ID,
+    publicKey: envVars.EMAILJS_PUBLIC_KEY,
+    privateKey: envVars.EMAILJS_PRIVATE_KEY,
+    templateAdmin: envVars.EMAILJS_TEMPLATE_ID_ADMIN,
+    templateCuenta: envVars.EMAILJS_TEMPLATE_ID_CUENTA,
+  },
   frontendUrl: envVars.FRONTEND_URL,
+  websiteUrl: envVars.WEBSITE_URL,
   adminNotificationEmails: envVars.ADMIN_NOTIFICATION_EMAILS || '',
 };

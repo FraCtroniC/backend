@@ -249,7 +249,19 @@ exports.create = async (req, res, next) => {
             </tr>
           </table>`;
 
-        await sendEmail({ to: toList.join(','), subject, text, html });
+        await sendEmail({
+          to: toList.join(','),
+          subject,
+          text,
+          html,
+          emailType: 'admin_notif',
+          emailParams: {
+            aspirantName,
+            document: `${item.document_type}-${item.document_id}`,
+            verificationCode: publicCode,
+            reviewUrl,
+          },
+        });
       } catch (err) {
         // No interrumpir el flujo de creación por fallos en el envío de correo
         console.error('Error enviando notificacion de preregistro a admins:', err.message || err);
@@ -355,7 +367,19 @@ exports.update = async (req, res, next) => {
         });
 
         try {
-          await sendEmail({ to: item.email, subject, text, html });
+          await sendEmail({
+            to: item.email,
+            subject,
+            text,
+            html,
+            emailType: 'approved',
+            emailParams: {
+              firstName: item.first_name,
+              lastName: item.first_lastname,
+              username: user.username,
+              password: rawPassword,
+            },
+          });
         } catch (mailErr) {
           console.error('Error enviando correo de aprobacion a aspirante:', mailErr.message || mailErr);
         }
@@ -387,7 +411,18 @@ exports.update = async (req, res, next) => {
       });
 
       try {
-        await sendEmail({ to: item.email, subject, text, html });
+        await sendEmail({
+          to: item.email,
+          subject,
+          text,
+          html,
+          emailType: 'rejected',
+          emailParams: {
+            firstName: item.first_name,
+            lastName: item.first_lastname,
+            verificationCode: item.verification_code || `PR-${String(item.id_pre).padStart(6, '0')}`,
+          },
+        });
       } catch (mailErr) {
         console.error('Error enviando correo de rechazo a aspirante:', mailErr.message || mailErr);
       }
