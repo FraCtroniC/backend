@@ -63,7 +63,9 @@ function buildAdminNotifParams({ toEmail, aspirantName, document, verificationCo
   return {
     to_email: toEmail,
     name: 'Portal Académico UPTNT',
+    from_name: 'Portal Académico UPTNT',
     email: 'no-reply@uptnt.edu.ve',
+    reply_to: 'no-reply@uptnt.edu.ve',
     aspirant_name: aspirantName || 'N/D',
     document: document || 'N/D',
     verification_code: verificationCode || 'N/D',
@@ -89,7 +91,9 @@ function buildApprovedParams({ toEmail, firstName, lastName, username, password 
   return {
     to_email: toEmail,
     name: 'Portal Académico UPTNT',
+    from_name: 'Portal Académico UPTNT',
     email: 'no-reply@uptnt.edu.ve',
+    reply_to: 'no-reply@uptnt.edu.ve',
     subject_text: 'Pre-registro Aprobado — Portal UPTNT',
     greeting: `Estimado(a) ${fullName},`,
     main_message:
@@ -118,7 +122,9 @@ function buildRejectedParams({ toEmail, firstName, lastName, verificationCode })
   return {
     to_email: toEmail,
     name: 'Portal Académico UPTNT',
+    from_name: 'Portal Académico UPTNT',
     email: 'no-reply@uptnt.edu.ve',
+    reply_to: 'no-reply@uptnt.edu.ve',
     subject_text: 'Actualización de pre-registro — Portal UPTNT',
     greeting: `Estimado(a) ${fullName},`,
     main_message:
@@ -145,7 +151,9 @@ function buildResetPasswordParams({ toEmail, displayName, resetUrl }) {
   return {
     to_email: toEmail,
     name: 'Portal Académico UPTNT',
+    from_name: 'Portal Académico UPTNT',
     email: 'no-reply@uptnt.edu.ve',
+    reply_to: 'no-reply@uptnt.edu.ve',
     subject_text: 'Recuperación de contraseña — Portal UPTNT',
     greeting: `Hola ${displayName || 'usuario'},`,
     main_message:
