@@ -184,11 +184,11 @@ exports.update = async (req, res, next) => {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
-    // AGREGAMOS password_hash AQUÍ ABAJO:
     const {
       id_role,
       username,
       password_hash,
+      password,
       first_name,
       second_name,
       first_lastname,
@@ -197,21 +197,67 @@ exports.update = async (req, res, next) => {
       phone,
       date_birth,
       status,
+      career,
+      academic_grade,
+      profession,
     } = req.body;
 
+    let finalPasswordHash = password_hash;
+    if (password) {
+      const { hashPassword } = require('../services/passwordService');
+      finalPasswordHash = hashPassword(password);
+    }
+
     await user.update({ 
-        id_role, 
-        username, 
-        password_hash,
+      id_role, 
+      username, 
+      password_hash: finalPasswordHash,
       first_name,
       second_name,
       first_lastname,
       second_lastname,
-        email, 
+      email, 
       phone,
       date_birth,
-        status 
+      status 
     });
+
+    // Update associated Student record (career) if applicable
+    if (career) {
+      let resolvedCareerId = null;
+      if (!isNaN(Number(career))) {
+        resolvedCareerId = Number(career);
+      } else {
+        const foundCareer = await Career.findOne({
+          where: {
+            name_career: {
+              [Op.iLike]: `%${career.trim()}%`
+            }
+          }
+        });
+        if (foundCareer) {
+          resolvedCareerId = foundCareer.id_career;
+        }
+      }
+
+      if (resolvedCareerId) {
+        const student = await Student.findOne({ where: { id_user: user.id_user } });
+        if (student) {
+          await student.update({ id_career: resolvedCareerId });
+        }
+      }
+    }
+
+    // Update associated Teacher record (academic grade and profession) if applicable
+    if (academic_grade || profession) {
+      const teacher = await Teacher.findOne({ where: { id_user: user.id_user } });
+      if (teacher) {
+        await teacher.update({
+          academic_grade: academic_grade || teacher.academic_grade,
+          profession: profession || teacher.profession
+        });
+      }
+    }
 
     const reloadedUser = await User.findByPk(user.id_user, {
       include: [

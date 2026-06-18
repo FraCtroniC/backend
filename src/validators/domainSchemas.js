@@ -77,11 +77,15 @@ const userUpdateSchema = z
     id_role: positiveInt.optional(),
     username: z.string().trim().min(3).max(50).optional(),
     password_hash: z.string().min(6).optional(),
+    password: z.string().min(6).optional(),
     ...userBaseNameSchema,
     email: z.string().trim().email().optional().nullable(),
     phone: z.string().trim().max(25).optional(),
     date_birth: z.string().optional().or(z.null()),
     status: userStatusSchema.optional(),
+    career: z.string().trim().optional(),
+    academic_grade: z.string().trim().optional(),
+    profession: z.string().trim().optional(),
   })
   .strict()
   .transform(mapLegacyNameFields)
