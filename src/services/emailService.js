@@ -9,7 +9,7 @@ const {
 } = require('./emailjsService');
 
 // ---------------------------------------------------------------------------
-// SMTP transport (nodemailer)
+// SMTP transport (nodemailer) — con timeouts para evitar cuelgues en Render
 // ---------------------------------------------------------------------------
 
 let transporter;
@@ -24,9 +24,19 @@ function getTransporter() {
         user: config.email.smtpUser,
         pass: config.email.smtpPass,
       },
+      // Timeouts explícitos para evitar cuelgues en entornos cloud (Render, Railway, etc.)
+      connectionTimeout: 10000,  // 10 s para conectar
+      greetingTimeout: 10000,    // 10 s para handshake SMTP
+      socketTimeout: 15000,      // 15 s de inactividad máxima
+      pool: false,               // Sin pool en serverless/cloud
     });
   }
   return transporter;
+}
+
+/** Fuerza recrear el transporter (útil si la conexión anterior quedó zombie) */
+function resetTransporter() {
+  transporter = null;
 }
 
 // ---------------------------------------------------------------------------
@@ -35,9 +45,9 @@ function getTransporter() {
 
 /**
  * Selecciona la plantilla y construye los parámetros según el tipo de correo.
- * @param {string} emailType  - 'admin_notif' | 'approved' | 'rejected' | 'reset_password'
- * @param {object} emailParams - Datos específicos del correo (ver emailjsService.js)
- * @param {string} to         - Destinatario (fallback si emailParams no incluye toEmail)
+ * @param {string} emailType   - 'admin_notif' | 'approved' | 'rejected' | 'reset_password'
+ * @param {object} emailParams - Datos específicos del correo
+ * @param {string} to          - Destinatario
  */
 async function sendViaEmailJSRouted(emailType, emailParams, to) {
   const { templateAdmin, templateCuenta } = config.emailjs;
@@ -67,12 +77,45 @@ async function sendViaEmailJSRouted(emailType, emailParams, to) {
       break;
 
     default:
-      // Tipo desconocido: registrar advertencia y no enviar
       console.warn(`[emailjs] Tipo de correo desconocido: "${emailType}". No se envió.`);
       return true;
   }
 
   await sendViaEmailJS(templateId, params);
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Envío SMTP con HTML completo (para smtp y dual)
+// ---------------------------------------------------------------------------
+
+async function sendViaSMTP({ to, subject, text, html }) {
+  const mailer = getTransporter();
+  try {
+    await mailer.sendMail({
+      from: config.email.from,
+      to,
+      subject,
+      text,
+      html,
+    });
+  } catch (err) {
+    // Si falla por conexión zombie, recrear transporter y reintentar una vez
+    if (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT' || err.code === 'ECONNREFUSED') {
+      console.warn('[smtp] Reconectando transporter y reintentando...');
+      resetTransporter();
+      const freshMailer = getTransporter();
+      await freshMailer.sendMail({
+        from: config.email.from,
+        to,
+        subject,
+        text,
+        html,
+      });
+    } else {
+      throw err;
+    }
+  }
   return true;
 }
 
@@ -83,25 +126,30 @@ async function sendViaEmailJSRouted(emailType, emailParams, to) {
 /**
  * Envía un correo usando el transport configurado en EMAIL_TRANSPORT.
  *
+ * Modos disponibles:
+ *   - 'log'     → solo imprime en consola (tests / desarrollo sin correo real)
+ *   - 'smtp'    → nodemailer vía SMTP (cualquier destinatario, sin límites)
+ *   - 'emailjs' → EmailJS (limitado a Contacts en plan gratuito)
+ *   - 'dual'    → EmailJS para admin_notif + SMTP para los demás (lo mejor de ambos)
+ *
  * @param {object} options
- * @param {string}  options.to          - Destinatario(s)
- * @param {string}  options.subject     - Asunto (usado en modo smtp/log)
- * @param {string}  [options.text]      - Texto plano (usado en modo smtp/log)
- * @param {string}  [options.html]      - HTML (usado en modo smtp/log)
- * @param {string}  [options.emailType] - Tipo de correo para modo emailjs:
- *                                        'admin_notif' | 'approved' | 'rejected' | 'reset_password'
- * @param {object}  [options.emailParams] - Parámetros adicionales para emailjs
+ * @param {string}  options.to           - Destinatario(s)
+ * @param {string}  options.subject      - Asunto
+ * @param {string}  [options.text]       - Texto plano
+ * @param {string}  [options.html]       - HTML del correo
+ * @param {string}  [options.emailType]  - 'admin_notif' | 'approved' | 'rejected' | 'reset_password'
+ * @param {object}  [options.emailParams]- Parámetros para emailjs
  */
 async function sendEmail({ to, subject, text, html, emailType, emailParams }) {
   const transport = config.email.transport;
 
-  // --- Modo log (desarrollo sin envío real) ---
+  // --- Modo log ---
   if (transport === 'log') {
-    console.log('[email:log] Simulando envio de correo', { to, subject, emailType, text });
+    console.log('[email:log] Simulando envio de correo', { to, subject, emailType });
     return true;
   }
 
-  // --- Modo emailjs ---
+  // --- Modo emailjs puro ---
   if (transport === 'emailjs') {
     if (!emailType) {
       console.warn('[emailjs] sendEmail llamado sin emailType. Se omite el envío.');
@@ -110,16 +158,16 @@ async function sendEmail({ to, subject, text, html, emailType, emailParams }) {
     return sendViaEmailJSRouted(emailType, emailParams || {}, to);
   }
 
-  // --- Modo smtp (nodemailer) ---
-  const mailer = getTransporter();
-  await mailer.sendMail({
-    from: config.email.from,
-    to,
-    subject,
-    text,
-    html,
-  });
-  return true;
+  // --- Modo dual: EmailJS para admin_notif, SMTP para el resto ---
+  if (transport === 'dual') {
+    if (emailType === 'admin_notif' && config.emailjs?.serviceId) {
+      return sendViaEmailJSRouted(emailType, emailParams || {}, to);
+    }
+    return sendViaSMTP({ to, subject, text, html });
+  }
+
+  // --- Modo smtp puro (default) ---
+  return sendViaSMTP({ to, subject, text, html });
 }
 
 module.exports = { sendEmail };

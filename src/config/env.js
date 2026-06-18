@@ -24,7 +24,7 @@ const schema = Joi.object({
   JWT_EXPIRES_IN: Joi.string().default('1h'),
   PASSWORD_RESET_TOKEN_EXPIRES_IN: Joi.string().default('30m'),
 
-  EMAIL_TRANSPORT: Joi.string().valid('log', 'smtp', 'emailjs').default('log'),
+  EMAIL_TRANSPORT: Joi.string().valid('log', 'smtp', 'emailjs', 'dual').default('log'),
   EMAIL_FROM: Joi.string().email().default('no-reply@example.com'),
   ADMIN_NOTIFICATION_EMAILS: Joi.string().allow('').optional(),
   SMTP_HOST: Joi.string().when('EMAIL_TRANSPORT', { is: 'smtp', then: Joi.required() }),
