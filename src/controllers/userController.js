@@ -25,8 +25,7 @@ function toSafeUser(userInstance) {
 // 1. Listar todos los usuarios (máximo 50)
 exports.list = async (req, res, next) => {
   try {
-    const users = await User.findAll({ 
-      limit: 50,
+    const users = await User.findAll({
       include: [
         {
           model: Student,

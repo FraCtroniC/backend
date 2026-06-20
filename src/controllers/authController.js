@@ -352,6 +352,8 @@ async function profile(req, res, next) {
       date_birth: data.date_birth,
       cum: data.Student ? 16.45 : (data.Role?.name_role === 'Estudiante' ? 16.45 : 0),
       academicStatus: data.Student?.status ?? (data.Role?.name_role === 'Estudiante' ? 'Regular' : ''),
+      id_student: data.Student?.id_student ?? null,
+      id_teacher: data.Teacher?.id_teacher ?? null,
     });
   } catch (error) {
     return next(error);
@@ -432,6 +434,8 @@ async function profileUpdate(req, res, next) {
       date_birth: data.date_birth,
       cum: data.Student ? 16.45 : 0,
       academicStatus: data.Student?.status ?? '',
+      id_student: data.Student?.id_student ?? null,
+      id_teacher: data.Teacher?.id_teacher ?? null,
     });
   } catch (error) {
     return next(error);
