@@ -37,8 +37,10 @@ const schema = Joi.object({
   EMAILJS_PRIVATE_KEY: Joi.string().when('EMAIL_TRANSPORT', { is: 'emailjs', then: Joi.required() }),
   EMAILJS_TEMPLATE_ID_ADMIN: Joi.string().when('EMAIL_TRANSPORT', { is: 'emailjs', then: Joi.required() }),
   EMAILJS_TEMPLATE_ID_CUENTA: Joi.string().when('EMAIL_TRANSPORT', { is: 'emailjs', then: Joi.required() }),
-  FRONTEND_URL: Joi.string().uri().default('http://localhost:5173'),
-  WEBSITE_URL: Joi.string().uri().default('http://localhost:5174'),
+  //FRONTEND_URL: Joi.string().uri().default('http://localhost:5173'),
+  //WEBSITE_URL: Joi.string().uri().default('http://localhost:5174'),
+  FRONTEND_URL: Joi.string().uri().default('https://sgumsfrontend.netlify.app'),
+  WEBSITE_URL: Joi.string().uri().default('https://sgumswebsite.netlify.app'),
 }).unknown();
 
 const { value: envVars, error } = schema.validate(process.env);
