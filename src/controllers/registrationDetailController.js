@@ -37,7 +37,8 @@ exports.create = async (req, res, next) => {
       recuperatorio, 
       final_note, 
       attendance_percentage, 
-      subject_status 
+      subject_status,
+      grade_status
     } = req.body;
     
     const newItem = await RegistrationDetail.create({ 
@@ -50,7 +51,8 @@ exports.create = async (req, res, next) => {
       recuperatorio, 
       final_note, 
       attendance_percentage, 
-      subject_status 
+      subject_status,
+      grade_status
     });
     
     res.status(201).json(newItem);
@@ -67,27 +69,7 @@ exports.update = async (req, res, next) => {
       return res.status(404).json({ message: 'Detalle no encontrado' });
     }
 
-    const { 
-      corte_1, 
-      corte_2, 
-      corte_3, 
-      corte_4, 
-      recuperatorio, 
-      final_note, 
-      attendance_percentage, 
-      subject_status 
-    } = req.body;
-
-    await item.update({ 
-      corte_1, 
-      corte_2, 
-      corte_3, 
-      corte_4, 
-      recuperatorio, 
-      final_note, 
-      attendance_percentage, 
-      subject_status 
-    });
+    await item.update(req.body);
 
     res.json(item);
   } catch (err) { 

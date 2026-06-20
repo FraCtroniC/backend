@@ -11,16 +11,16 @@ const {
 
 function toSafeUser(userInstance) {
   const user = userInstance.get({ plain: true });
-  
+
   user.career = '';
   user.period = '2026-II';
   user.cum = 0;
-  
+
   if (user.Student) {
     user.career = user.Student.Career?.name_career || '';
     user.cum = 16.45;
   }
-  
+
   if (user.Teacher) {
     user.academic_title = user.Teacher.academic_grade || '';
     user.expertise = user.Teacher.profession || 'Pendiente de asignación';
@@ -229,7 +229,7 @@ async function login(req, res, next) {
       ]
     });
     if (!user) {
-      return res.status(401).json({ message: 'Credenciales inválidas' });
+      return res.status(401).json({ message: 'Usuario no encontrado' });
     }
 
     if (user.status && user.status !== 'Activo') {

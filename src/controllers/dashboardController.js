@@ -232,24 +232,11 @@ exports.getTeacherDashboard = async (req, res, next) => {
 
     return res.json({
       metrics: {
-        activeSubjects: activeSubjects || 3,
-        pendingGrades: pendingGrades || 2,
-        historyCount: historyCount || 2
+        activeSubjects: activeSubjects,
+        pendingGrades: pendingGrades,
+        historyCount: historyCount
       },
-      assignments: assignments.length > 0 ? assignments : [
-        {
-          id: 'asg-1',
-          code: 'INF-301',
-          subject: 'Programación III',
-          section: 'A-01',
-          career: 'Informática',
-          semester: 'Semestre III',
-          period: '2026-I',
-          enrolled: 28,
-          editableUntil: '2026-07-30T23:59:59',
-          actStatus: 'abierta'
-        }
-      ],
+      assignments: assignments,
       history: []
     });
   } catch (error) {
