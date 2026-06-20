@@ -212,6 +212,12 @@ exports.getTeacherDashboard = async (req, res, next) => {
         where: { id_section: sec.id_section }
       });
 
+      // Find details to see if all are confirmed
+      const details = await RegistrationDetail.findAll({
+        where: { id_section: sec.id_section }
+      });
+      const allConfirmed = details.length > 0 && details.every(d => d.grade_status === 'Confirmada');
+
       assignments.push({
         id: `asg-${sec.id_section}`,
         code: sec.Subject?.code_subject || 'N/A',
@@ -222,7 +228,7 @@ exports.getTeacherDashboard = async (req, res, next) => {
         period: sec.AcademicPeriod?.name_period || '2026-I',
         enrolled: enrolledCount || 0,
         editableUntil: sec.AcademicPeriod?.end_date ? `${sec.AcademicPeriod.end_date}T23:59:59` : '2026-07-30T23:59:59',
-        actStatus: sec.AcademicPeriod?.period_status === 'Cerrada' ? 'cerrada' : 'abierta'
+        actStatus: (sec.AcademicPeriod?.period_status === 'Cerrada' || allConfirmed) ? 'cerrada' : 'abierta'
       });
     }
 
