@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { User, Role, Student, Teacher, Career, sequelize } = require('../models');
+const { User, Role, Student, Teacher, Career, Registration, RegistrationDetail, sequelize } = require('../models');
 const { signAccessToken } = require('../services/jwtService');
 const config = require('../config/env');
 const { hashPassword, verifyPassword } = require('../services/passwordService');
@@ -18,7 +18,7 @@ function toSafeUser(userInstance) {
 
   if (user.Student) {
     user.career = user.Student.Career?.name_career || '';
-    user.cum = 16.45;
+    user.cum = 0.0;
   }
 
   if (user.Teacher) {
@@ -334,6 +334,31 @@ async function profile(req, res, next) {
 
     const data = user.get({ plain: true });
 
+    let calculatedCum = 0.0;
+    if (data.Student) {
+      const registrations = await Registration.findAll({
+        where: { id_student: data.Student.id_student },
+        include: [{
+          model: RegistrationDetail
+        }]
+      });
+      let totalGrades = 0;
+      let gradesCount = 0;
+      registrations.forEach(reg => {
+        if (reg.RegistrationDetails) {
+          reg.RegistrationDetails.forEach(detail => {
+            if (detail.final_note !== null && detail.final_note !== undefined) {
+              totalGrades += Number(detail.final_note);
+              gradesCount++;
+            }
+          });
+        }
+      });
+      if (gradesCount > 0) {
+        calculatedCum = Number((totalGrades / gradesCount).toFixed(2));
+      }
+    }
+
     return res.json({
       id: data.id_user,
       email: data.email,
@@ -350,7 +375,7 @@ async function profile(req, res, next) {
       expertise: data.Teacher?.profession ?? '',
       document_id: data.document_id,
       date_birth: data.date_birth,
-      cum: data.Student ? 16.45 : (data.Role?.name_role === 'Estudiante' ? 16.45 : 0),
+      cum: calculatedCum,
       academicStatus: data.Student?.status ?? (data.Role?.name_role === 'Estudiante' ? 'Regular' : ''),
       id_student: data.Student?.id_student ?? null,
       id_teacher: data.Teacher?.id_teacher ?? null,
@@ -416,6 +441,31 @@ async function profileUpdate(req, res, next) {
 
     const data = updatedUser.get({ plain: true });
 
+    let calculatedCum = 0.0;
+    if (data.Student) {
+      const registrations = await Registration.findAll({
+        where: { id_student: data.Student.id_student },
+        include: [{
+          model: RegistrationDetail
+        }]
+      });
+      let totalGrades = 0;
+      let gradesCount = 0;
+      registrations.forEach(reg => {
+        if (reg.RegistrationDetails) {
+          reg.RegistrationDetails.forEach(detail => {
+            if (detail.final_note !== null && detail.final_note !== undefined) {
+              totalGrades += Number(detail.final_note);
+              gradesCount++;
+            }
+          });
+        }
+      });
+      if (gradesCount > 0) {
+        calculatedCum = Number((totalGrades / gradesCount).toFixed(2));
+      }
+    }
+
     return res.json({
       id: data.id_user,
       email: data.email,
@@ -432,7 +482,7 @@ async function profileUpdate(req, res, next) {
       expertise: data.Teacher?.profession ?? '',
       document_id: data.document_id,
       date_birth: data.date_birth,
-      cum: data.Student ? 16.45 : 0,
+      cum: calculatedCum,
       academicStatus: data.Student?.status ?? '',
       id_student: data.Student?.id_student ?? null,
       id_teacher: data.Teacher?.id_teacher ?? null,

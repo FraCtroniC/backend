@@ -267,6 +267,11 @@ exports.getStudentDashboard = async (req, res, next) => {
     if (!student) {
       const user = await User.findByPk(userId);
       // Graceful fallback for demo student data
+      const activePeriod = await AcademicPeriod.findOne({
+        where: { period_status: 'Activo' }
+      });
+      const currentPeriod = activePeriod ? activePeriod.name_period : '2026-II';
+
       return res.json({
         profile: {
           name: user?.first_name || 'Ana',
@@ -274,24 +279,14 @@ exports.getStudentDashboard = async (req, res, next) => {
           career: 'Informática',
           faculty: 'Facultad de Ingeniería',
           director: 'Dra. Helena Pirela',
-          cum: 16.45,
+          cum: 0.0,
           creditsRequired: 160,
           academicStatus: 'Regular',
-          currentPeriod: '2026-I'
+          currentPeriod
         },
-        enrolled: [
-          {
-            code: 'INF-301',
-            credits: 4,
-            name: 'Programación III',
-            sectionCode: 'A-01',
-            classroom: 'Aula 104',
-            teacher: 'María Rodríguez',
-            schedule: 'Lun/Mie 08:00 - 10:00'
-          }
-        ],
+        enrolled: [],
         metrics: {
-          creditsPassed: 45
+          creditsPassed: 0
         }
       });
     }
@@ -347,7 +342,12 @@ exports.getStudentDashboard = async (req, res, next) => {
       });
     });
 
-    const calculatedCum = gradesCount > 0 ? (totalGrades / gradesCount) : 16.45; // Default CUM fallback if new student
+    const calculatedCum = gradesCount > 0 ? (totalGrades / gradesCount) : 0.0;
+
+    const activePeriod = await AcademicPeriod.findOne({
+      where: { period_status: 'Activo' }
+    });
+    const currentPeriod = activePeriod ? activePeriod.name_period : '2026-II';
 
     // Map career to appropriate Faculty and Director
     let faculty = 'Facultad de Ingeniería y Sistemas';
@@ -369,11 +369,11 @@ exports.getStudentDashboard = async (req, res, next) => {
         cum: Number(calculatedCum.toFixed(2)),
         creditsRequired: 160,
         academicStatus: student.status || 'Regular',
-        currentPeriod: '2026-I' // Period default
+        currentPeriod
       },
       enrolled: enrolledClasses,
       metrics: {
-        creditsPassed: totalCreditsPassed || 45 // Fallback baseline if no history yet
+        creditsPassed: totalCreditsPassed
       }
     });
   } catch (error) {

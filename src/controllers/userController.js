@@ -10,7 +10,7 @@ function toSafeUser(userInstance) {
   
   if (user.Student) {
     user.career = user.Student.Career?.name_career || '';
-    user.cum = 16.45;
+    user.cum = 0.0;
   }
   
   if (user.Teacher) {
