@@ -3,6 +3,7 @@ const { PreRegistration, User, Role, State, Municipality, Parish, Career, Semest
 const { sendEmail } = require('../services/emailService');
 const config = require('../config/env');
 const { hashPassword } = require('../services/passwordService');
+const { logActivity } = require('../utils/auditLogger');
 
 async function generateVerificationCode() {
   let code = '';
@@ -131,6 +132,23 @@ exports.create = async (req, res, next) => {
       ...req.body,
       verification_code: verificationCode,
     });
+
+    try {
+      let careerName = 'Carrera por definir';
+      if (item.id_career) {
+        const c = await Career.findByPk(item.id_career);
+        if (c) careerName = c.name_career;
+      }
+      await logActivity(req, {
+        action: 'CREATE',
+        tableAffected: 'Preinscripción',
+        recordId: item.id_pre,
+        newValue: `Preinscripción de ${item.first_name} ${item.first_lastname} registrada para la carrera de ${careerName}`
+      });
+    } catch (logErr) {
+      console.error('AuditLog create error:', logErr);
+    }
+
     res.status(201).json(item);
 
     // Notificar por correo a los administradores que hay un nuevo preregistro pendiente
@@ -283,6 +301,33 @@ exports.update = async (req, res, next) => {
     const newStatus = req.body.status_pre;
 
     await item.update(req.body);
+
+    try {
+      if (newStatus === 'Aprobado' && oldStatus !== 'Aprobado') {
+        await logActivity(req, {
+          action: 'UPDATE',
+          tableAffected: 'Preinscripción',
+          recordId: item.id_pre,
+          newValue: `Preinscripción aprobada para ${item.first_name} ${item.first_lastname} (${item.document_type}-${item.document_id}). Cuenta de acceso creada.`
+        });
+      } else if (newStatus === 'Rechazado' && oldStatus !== 'Rechazado') {
+        await logActivity(req, {
+          action: 'UPDATE',
+          tableAffected: 'Preinscripción',
+          recordId: item.id_pre,
+          newValue: `Preinscripción rechazada para ${item.first_name} ${item.first_lastname} (${item.document_type}-${item.document_id})`
+        });
+      } else {
+        await logActivity(req, {
+          action: 'UPDATE',
+          tableAffected: 'Preinscripción',
+          recordId: item.id_pre,
+          newValue: `Modificado el estado de preinscripción de ${item.first_name} ${item.first_lastname} a "${newStatus || 'Modificado'}"`
+        });
+      }
+    } catch (logErr) {
+      console.error('AuditLog update error:', logErr);
+    }
 
     // Si pasa a Aprobado y antes no lo estaba
     if (newStatus === 'Aprobado' && oldStatus !== 'Aprobado') {
@@ -451,6 +496,18 @@ exports.remove = async (req, res, next) => {
       status_pre: 'Rechazado',
       observations: nextObservations,
     });
+
+    try {
+      await logActivity(req, {
+        action: 'DELETE',
+        tableAffected: 'Preinscripción',
+        recordId: item.id_pre,
+        newValue: `Preinscripción eliminada de ${item.first_name} ${item.first_lastname}`
+      });
+    } catch (logErr) {
+      console.error('AuditLog delete error:', logErr);
+    }
+
     res.status(204).end();
   } catch (err) {
     next(err);

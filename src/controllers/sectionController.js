@@ -1,5 +1,6 @@
 /** Controlador REST de secciones. */
 const { Section, Career, Subject, Teacher, User, AcademicPeriod } = require('../models');
+const { logActivity } = require('../utils/auditLogger');
 
 // Helper to include associations
 const includeAssociations = [
@@ -66,6 +67,21 @@ exports.create = async (req, res, next) => {
       include: includeAssociations
     });
 
+    try {
+      const subjectName = populated.Subject?.name_subject || 'Asignatura';
+      const teacherName = populated.Teacher?.User 
+        ? `${populated.Teacher.User.first_name} ${populated.Teacher.User.first_lastname}`
+        : 'Docente no asignado';
+      await logActivity(req, {
+        action: 'CREATE',
+        tableAffected: 'Sección',
+        recordId: newSection.id_section,
+        newValue: `Creada sección ${section_code} de ${subjectName}. Docente: ${teacherName}`
+      });
+    } catch (logErr) {
+      console.error('AuditLog section create error:', logErr);
+    }
+
     res.status(201).json(populated);
   } catch (err) { 
     next(err); 
@@ -106,6 +122,27 @@ exports.update = async (req, res, next) => {
       include: includeAssociations
     });
 
+    try {
+      const subjectName = populated.Subject?.name_subject || 'Asignatura';
+      const teacherName = populated.Teacher?.User 
+        ? `${populated.Teacher.User.first_name} ${populated.Teacher.User.first_lastname}`
+        : 'Docente no asignado';
+      
+      let newValue = `Sección ${populated.section_code} de ${subjectName} actualizada.`;
+      if (id_teacher && id_teacher !== section.id_teacher) {
+        newValue = `Docente ${teacherName} asignado a la sección ${populated.section_code} de ${subjectName}`;
+      }
+      
+      await logActivity(req, {
+        action: 'UPDATE',
+        tableAffected: 'Sección',
+        recordId: section.id_section,
+        newValue
+      });
+    } catch (logErr) {
+      console.error('AuditLog section update error:', logErr);
+    }
+
     res.json(populated);
   } catch (err) { 
     next(err); 
@@ -115,12 +152,29 @@ exports.update = async (req, res, next) => {
 // 5. Eliminar sección (DELETE)
 exports.remove = async (req, res, next) => {
   try {
-    const section = await Section.findByPk(req.params.id);
+    const section = await Section.findByPk(req.params.id, {
+      include: includeAssociations
+    });
     if (!section) {
       return res.status(404).json({ message: 'Sección no encontrada' });
     }
     
+    const secCode = section.section_code;
+    const subjectName = section.Subject?.name_subject || 'Asignatura';
+
     await section.destroy();
+
+    try {
+      await logActivity(req, {
+        action: 'DELETE',
+        tableAffected: 'Sección',
+        recordId: req.params.id,
+        newValue: `Eliminada sección ${secCode} de la asignatura ${subjectName}`
+      });
+    } catch (logErr) {
+      console.error('AuditLog section delete error:', logErr);
+    }
+
     res.status(204).end();
   } catch (err) { 
     next(err); 

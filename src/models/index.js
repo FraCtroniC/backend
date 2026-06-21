@@ -98,6 +98,9 @@ Semester.hasMany(PreRegistration, { foreignKey: 'id_semester' });
 PreRegistration.hasMany(PreDocument, { foreignKey: 'id_pre' });
 PreDocument.belongsTo(PreRegistration, { foreignKey: 'id_pre' });
 
+AuditLog.belongsTo(User, { foreignKey: 'id_user' });
+User.hasMany(AuditLog, { foreignKey: 'id_user' });
+
 module.exports = {
   sequelize,
   Sequelize,

@@ -1,5 +1,5 @@
-/** Controlador REST de periodos academicos. */
-const { AcademicPeriod } = require('../models');
+const { AcademicPeriod, AuditLog } = require('../models');
+const { logActivity } = require('../utils/auditLogger');
 
 // 1. Listar todos los periodos (ordenados por fecha de inicio)
 exports.list = async (req, res, next) => {
@@ -35,6 +35,15 @@ exports.create = async (req, res, next) => {
       enrollment_status,
       period_status
     });
+    
+    // Log creation in audit logs
+    await logActivity(req, {
+      action: 'CREATE',
+      tableAffected: 'Período Académico',
+      recordId: item.id_period,
+      newValue: `Creado el período académico ${name_period}`
+    });
+
     res.status(201).json(item);
   } catch (err) {
     next(err);
@@ -47,7 +56,17 @@ exports.update = async (req, res, next) => {
     const item = await AcademicPeriod.findByPk(req.params.id);
     if (!item) return res.status(404).json({ message: 'Periodo no encontrado' });
     
+    const oldName = item.name_period;
     await item.update(req.body);
+
+    // Log update in audit logs
+    await logActivity(req, {
+      action: 'UPDATE',
+      tableAffected: 'Período Académico',
+      recordId: item.id_period,
+      newValue: `Modificado el período académico ${oldName}. Estatus: ${item.period_status}, Inscripción: ${item.enrollment_status}`
+    });
+
     res.json(item);
   } catch (err) {
     next(err);
