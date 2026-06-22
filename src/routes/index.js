@@ -25,6 +25,8 @@ const parishRoutes = require('./parishRoutes');
 const preRegistrationRoutes = require('./preRegistrationRoutes');
 const preDocumentRoutes = require('./preDocumentRoutes');
 const dashboardRoutes = require('./dashboardRoutes');
+const notificationRoutes = require('./notificationRoutes');
+const academicHistoryRoutes = require('./academicHistoryRoutes');
 
 
 router.get('/', health.ping);
@@ -51,6 +53,8 @@ router.use('/parishes', parishRoutes);
 router.use('/pre-registrations', preRegistrationRoutes);
 router.use('/pre-documents', preDocumentRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/academic-history', academicHistoryRoutes);
 
 
 module.exports = router;

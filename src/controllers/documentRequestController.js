@@ -1,5 +1,6 @@
 /** Controlador REST de solicitudes de documentos. */
 const { DocumentRequest } = require('../models');
+const NotificationService = require('../services/notificationService');
 
 // 1. Listar todas las solicitudes de documentos
 exports.list = async (req, res, next) => {
@@ -62,6 +63,15 @@ exports.update = async (req, res, next) => {
       status, 
       hash_verification 
     });
+
+    if (status && status !== item.status) {
+      await NotificationService.notifyStudent(
+        id_student || item.id_student,
+        'Solicitud de Documento',
+        `Tu solicitud de ${document_type || item.document_type} ha cambiado a estado: ${status}`,
+        status === 'Procesado' ? 'success' : 'info'
+      );
+    }
 
     res.json(item);
   } catch (err) { 

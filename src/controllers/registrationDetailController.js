@@ -1,6 +1,7 @@
 /** Controlador REST de detalles de inscripcion. */
 const { RegistrationDetail, Section, Subject, Registration, Student, User } = require('../models');
 const { logActivity } = require('../utils/auditLogger');
+const NotificationService = require('../services/notificationService');
 
 // 1. Listar todos los detalles de inscripción (Notas)
 exports.list = async (req, res, next) => {
@@ -144,6 +145,13 @@ exports.update = async (req, res, next) => {
           recordId: populated.id_registration_detail || populated.id,
           newValue
         });
+
+        // Notify the student
+        if (populated.Registration?.id_student) {
+          const title = req.body.grade_status === 'Confirmada' ? 'Acta Confirmada' : 'Calificaciones Actualizadas';
+          const msg = `Se han actualizado tus notas en la asignatura: ${subjectName}`;
+          await NotificationService.notifyStudent(populated.Registration.id_student, title, msg, 'info');
+        }
       }
     } catch (logErr) {
       console.error('AuditLog grades update error:', logErr);

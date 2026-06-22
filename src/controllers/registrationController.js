@@ -1,13 +1,50 @@
 /** Controlador REST de inscripciones. */
 const { Registration } = require('../models');
+const NotificationService = require('../services/notificationService');
 
-// 1. Listar todas las inscripciones
+// 1. Listar inscripciones con paginación y relaciones
 exports.list = async (req, res, next) => {
   try {
-    const registrations = await Registration.findAll({ 
-      order: [['registration_date', 'DESC']] 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Registration.findAndCountAll({ 
+      limit,
+      offset,
+      order: [['registration_date', 'DESC']],
+      include: [
+        {
+          model: require('../models').Student,
+          include: [
+            { model: require('../models').User, attributes: ['id_user', 'first_name', 'first_lastname', 'document_id'] },
+            { model: require('../models').Career, attributes: ['id_career', 'name_career'] }
+          ]
+        },
+        { model: require('../models').AcademicPeriod, attributes: ['id_period', 'name_period'] },
+        {
+          model: require('../models').RegistrationDetail,
+          include: [
+            {
+              model: require('../models').Section,
+              include: [
+                { model: require('../models').Subject, attributes: ['id_subject', 'name_subject', 'credit_units'] }
+              ]
+            }
+          ]
+        }
+      ]
     });
-    res.json(registrations);
+
+    res.json({
+      data: rows,
+      meta: {
+        totalItems: count,
+        totalPages: Math.ceil(count / limit),
+        currentPage: page,
+        limit
+      }
+    });
   } catch (err) { 
     next(err); 
   }
@@ -60,6 +97,15 @@ exports.update = async (req, res, next) => {
       registration_date, 
       status 
     });
+
+    if (status && status !== registration.status) {
+      await NotificationService.notifyStudent(
+        id_student || registration.id_student,
+        'Estado de Inscripción',
+        `Tu solicitud de inscripción ha cambiado al estado: ${status}`,
+        status === 'Aprobada' ? 'success' : 'info'
+      );
+    }
 
     res.json(registration);
   } catch (err) { 

@@ -1,6 +1,7 @@
 /** Controlador REST de secciones. */
 const { Section, Career, Subject, Teacher, User, AcademicPeriod } = require('../models');
 const { logActivity } = require('../utils/auditLogger');
+const NotificationService = require('../services/notificationService');
 
 // Helper to include associations
 const includeAssociations = [
@@ -78,6 +79,10 @@ exports.create = async (req, res, next) => {
         recordId: newSection.id_section,
         newValue: `Creada sección ${section_code} de ${subjectName}. Docente: ${teacherName}`
       });
+
+      if (id_teacher) {
+        await NotificationService.notifyTeacher(id_teacher, 'Nueva Asignación', `Has sido asignado a la sección ${section_code} de la materia ${subjectName}.`, 'info');
+      }
     } catch (logErr) {
       console.error('AuditLog section create error:', logErr);
     }
@@ -131,6 +136,7 @@ exports.update = async (req, res, next) => {
       let newValue = `Sección ${populated.section_code} de ${subjectName} actualizada.`;
       if (id_teacher && id_teacher !== section.id_teacher) {
         newValue = `Docente ${teacherName} asignado a la sección ${populated.section_code} de ${subjectName}`;
+        await NotificationService.notifyTeacher(id_teacher, 'Nueva Asignación', `Has sido asignado a la sección ${populated.section_code} de la materia ${subjectName}.`, 'info');
       }
       
       await logActivity(req, {

@@ -21,6 +21,7 @@ const Municipality = require('./municipality')(sequelize, Sequelize.DataTypes);
 const Parish = require('./parish')(sequelize, Sequelize.DataTypes);
 const PreRegistration = require('./pre_registration')(sequelize, Sequelize.DataTypes);
 const PreDocument = require('./pre_document')(sequelize, Sequelize.DataTypes);
+const Notification = require('./notification')(sequelize, Sequelize.DataTypes);
 
 // Associations (basic examples)
 Role.hasMany(User, { foreignKey: 'id_role' });
@@ -71,6 +72,9 @@ Student.belongsTo(Semester, { foreignKey: 'id_semester' });
 Student.hasMany(Registration, { foreignKey: 'id_student' });
 Registration.belongsTo(Student, { foreignKey: 'id_student' });
 
+AcademicPeriod.hasMany(Registration, { foreignKey: 'id_period' });
+Registration.belongsTo(AcademicPeriod, { foreignKey: 'id_period' });
+
 Registration.hasMany(RegistrationDetail, { foreignKey: 'id_registration' });
 RegistrationDetail.belongsTo(Registration, { foreignKey: 'id_registration' });
 
@@ -101,6 +105,9 @@ PreDocument.belongsTo(PreRegistration, { foreignKey: 'id_pre' });
 AuditLog.belongsTo(User, { foreignKey: 'id_user' });
 User.hasMany(AuditLog, { foreignKey: 'id_user' });
 
+User.hasMany(Notification, { foreignKey: 'id_user' });
+Notification.belongsTo(User, { foreignKey: 'id_user' });
+
 module.exports = {
   sequelize,
   Sequelize,
@@ -125,4 +132,5 @@ module.exports = {
   Parish,
   PreRegistration,
   PreDocument,
+  Notification,
 };

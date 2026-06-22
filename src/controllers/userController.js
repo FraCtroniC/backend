@@ -22,10 +22,42 @@ function toSafeUser(userInstance) {
   return user;
 }
 
-// 1. Listar todos los usuarios (máximo 50)
+// 1. Listar usuarios con paginación y filtros
 exports.list = async (req, res, next) => {
   try {
-    const users = await User.findAll({
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const { search, role, status } = req.query;
+
+    const where = {};
+    if (status && status !== 'Todos') {
+      where.status = { [Op.iLike]: status };
+    }
+
+    if (search) {
+      where[Op.or] = [
+        { document_id: { [Op.iLike]: `%${search}%` } },
+        { first_name: { [Op.iLike]: `%${search}%` } },
+        { first_lastname: { [Op.iLike]: `%${search}%` } },
+        { email: { [Op.iLike]: `%${search}%` } },
+        { username: { [Op.iLike]: `%${search}%` } }
+      ];
+    }
+
+    // Role filtering mapping: students=3, teachers=2, admins=1
+    if (role) {
+      if (role === 'students') where.id_role = 3;
+      else if (role === 'teachers') where.id_role = 2;
+      else if (role === 'admins') where.id_role = 1;
+    }
+
+    const { count, rows } = await User.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [['created_at', 'DESC']],
       include: [
         {
           model: Student,
@@ -36,7 +68,16 @@ exports.list = async (req, res, next) => {
         }
       ]
     });
-    res.json(users.map(toSafeUser));
+
+    res.json({
+      data: rows.map(toSafeUser),
+      meta: {
+        totalItems: count,
+        totalPages: Math.ceil(count / limit),
+        currentPage: page,
+        limit
+      }
+    });
   } catch (err) {
     next(err);
   }

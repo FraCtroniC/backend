@@ -4,6 +4,7 @@ const { sendEmail } = require('../services/emailService');
 const config = require('../config/env');
 const { hashPassword } = require('../services/passwordService');
 const { logActivity } = require('../utils/auditLogger');
+const NotificationService = require('../services/notificationService');
 
 async function generateVerificationCode() {
   let code = '';
@@ -82,13 +83,39 @@ function buildStyledEmail({ title, subtitle, intro, body, detailsTitle, detailsR
 
 exports.list = async (req, res, next) => {
   try {
-    const items = await PreRegistration.findAll({
-      where: {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const offset = (page - 1) * limit;
+
+    const { search, status_pre } = req.query;
+
+    const where = {
+      [require('sequelize').Op.or]: [
+        { observations: null },
+        { observations: { [require('sequelize').Op.notLike]: '%[[SOFT_DELETED]]%' } },
+      ],
+    };
+
+    if (status_pre && status_pre !== 'Todos') {
+      where.status_pre = { [require('sequelize').Op.iLike]: status_pre };
+    }
+
+    if (search) {
+      where[require('sequelize').Op.and] = where[require('sequelize').Op.and] || [];
+      where[require('sequelize').Op.and].push({
         [require('sequelize').Op.or]: [
-          { observations: null },
-          { observations: { [require('sequelize').Op.notLike]: '%[[SOFT_DELETED]]%' } },
-        ],
-      },
+          { document_id: { [require('sequelize').Op.iLike]: `%${search}%` } },
+          { first_name: { [require('sequelize').Op.iLike]: `%${search}%` } },
+          { first_lastname: { [require('sequelize').Op.iLike]: `%${search}%` } },
+          { email: { [require('sequelize').Op.iLike]: `%${search}%` } }
+        ]
+      });
+    }
+
+    const { count, rows } = await PreRegistration.findAndCountAll({
+      where,
+      limit,
+      offset,
       include: [
         { model: State, attributes: ['id_state', 'name_state'] },
         { model: Municipality, attributes: ['id_municipality', 'name_municipality'] },
@@ -97,9 +124,17 @@ exports.list = async (req, res, next) => {
         { model: Semester, attributes: ['id_semester', 'number_semester'] }
       ],
       order: [['created_at', 'DESC']],
-      limit: 100,
     });
-    res.json(items);
+
+    res.json({
+      data: rows,
+      meta: {
+        totalItems: count,
+        totalPages: Math.ceil(count / limit),
+        currentPage: page,
+        limit
+      }
+    });
   } catch (err) {
     next(err);
   }
@@ -150,6 +185,14 @@ exports.create = async (req, res, next) => {
     }
 
     res.status(201).json(item);
+
+    // Notificar a los administradores vía campanita
+    NotificationService.notifyAdmins(
+      'Nuevo Pre-registro',
+      `El aspirante ${item.first_name} ${item.first_lastname} ha enviado su formulario.`,
+      'info',
+      `/admin/pre-registrations/${item.id_pre}`
+    );
 
     // Notificar por correo a los administradores que hay un nuevo preregistro pendiente
     (async () => {
