@@ -37,12 +37,22 @@ exports.list = async (req, res, next) => {
     }
 
     if (search) {
-      where[Op.or] = [
-        { document_id: { [Op.iLike]: `%${search}%` } },
-        { first_name: { [Op.iLike]: `%${search}%` } },
-        { first_lastname: { [Op.iLike]: `%${search}%` } },
-        { email: { [Op.iLike]: `%${search}%` } },
-        { username: { [Op.iLike]: `%${search}%` } }
+      const searchTerms = search.trim().split(/\s+/);
+      const searchConditions = searchTerms.map(term => ({
+        [Op.or]: [
+          { document_id: { [Op.iLike]: `%${term}%` } },
+          { first_name: { [Op.iLike]: `%${term}%` } },
+          { second_name: { [Op.iLike]: `%${term}%` } },
+          { first_lastname: { [Op.iLike]: `%${term}%` } },
+          { second_lastname: { [Op.iLike]: `%${term}%` } },
+          { email: { [Op.iLike]: `%${term}%` } },
+          { username: { [Op.iLike]: `%${term}%` } }
+        ]
+      }));
+      
+      where[Op.and] = [
+        ...(where[Op.and] || []),
+        ...searchConditions
       ];
     }
 

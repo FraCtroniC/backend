@@ -1,5 +1,5 @@
 /** Controlador REST de detalles de inscripcion. */
-const { RegistrationDetail, Section, Subject, Registration, Student, User } = require('../models');
+const { RegistrationDetail, Section, Subject, Registration, Student, User, AcademicPeriod } = require('../models');
 const { logActivity } = require('../utils/auditLogger');
 const NotificationService = require('../services/notificationService');
 
@@ -43,6 +43,14 @@ exports.create = async (req, res, next) => {
       grade_status
     } = req.body;
     
+    // Validar que el período no esté culminado
+    const section = await Section.findByPk(id_section, {
+      include: [{ model: AcademicPeriod }]
+    });
+    if (section && section.AcademicPeriod?.period_status === 'Culminado') {
+      return res.status(400).json({ message: 'No se pueden cargar notas porque el período académico asociado ya está Culminado.' });
+    }
+
     const newItem = await RegistrationDetail.create({ 
       id_registration, 
       id_section, 
@@ -101,9 +109,19 @@ exports.create = async (req, res, next) => {
 // 4. Actualizar notas o asistencia (PUT)
 exports.update = async (req, res, next) => {
   try {
-    const item = await RegistrationDetail.findByPk(req.params.id);
+    const item = await RegistrationDetail.findByPk(req.params.id, {
+      include: [{
+        model: Section,
+        include: [{ model: AcademicPeriod }]
+      }]
+    });
+    
     if (!item) {
       return res.status(404).json({ message: 'Detalle no encontrado' });
+    }
+
+    if (item.Section?.AcademicPeriod?.period_status === 'Culminado') {
+      return res.status(400).json({ message: 'No se pueden modificar notas porque el período académico ya está Culminado.' });
     }
 
     await item.update(req.body);

@@ -1,4 +1,4 @@
-const { AcademicPeriod, AuditLog } = require('../models');
+const { AcademicPeriod, AuditLog, Section, Registration } = require('../models');
 const { logActivity } = require('../utils/auditLogger');
 const NotificationService = require('../services/notificationService');
 
@@ -29,11 +29,23 @@ exports.get = async (req, res, next) => {
 exports.create = async (req, res, next) => {
   try {
     const { name_period, start_date, end_date, enrollment_status, period_status } = req.body;
+    
+    // Validar si ya hay un período activo
+    if (period_status === 'Activo') {
+      const activePeriod = await AcademicPeriod.findOne({ where: { period_status: 'Activo' } });
+      if (activePeriod) {
+        return res.status(400).json({ message: `Ya existe un período activo (${activePeriod.name_period}). Debe culminarlo antes de iniciar otro.` });
+      }
+    }
+
+    // Forzar cierre de inscripción si está culminado
+    const finalEnrollmentStatus = period_status === 'Culminado' ? 'Cerrada' : enrollment_status;
+
     const item = await AcademicPeriod.create({
       name_period,
       start_date,
       end_date,
-      enrollment_status,
+      enrollment_status: finalEnrollmentStatus,
       period_status
     });
     
@@ -60,10 +72,21 @@ exports.update = async (req, res, next) => {
   try {
     const item = await AcademicPeriod.findByPk(req.params.id);
     if (!item) return res.status(404).json({ message: 'Periodo no encontrado' });
-    
+    const { period_status, enrollment_status } = req.body;
+
+    // Validar si ya hay un período activo distinto a este
+    if (period_status === 'Activo' && item.period_status !== 'Activo') {
+      const activePeriod = await AcademicPeriod.findOne({ where: { period_status: 'Activo' } });
+      if (activePeriod && activePeriod.id_period !== item.id_period) {
+        return res.status(400).json({ message: `Ya existe un período activo (${activePeriod.name_period}). Debe culminarlo antes de activar este.` });
+      }
+    }
+
+    const finalEnrollmentStatus = period_status === 'Culminado' ? 'Cerrada' : (enrollment_status || item.enrollment_status);
+
     const oldName = item.name_period;
     const oldStatus = item.period_status;
-    await item.update(req.body);
+    await item.update({ ...req.body, enrollment_status: finalEnrollmentStatus });
 
     // Log update in audit logs
     await logActivity(req, {
@@ -89,6 +112,16 @@ exports.remove = async (req, res, next) => {
     const item = await AcademicPeriod.findByPk(req.params.id);
     if (!item) return res.status(404).json({ message: 'Periodo no encontrado' });
     
+    // Verificar si hay registros dependientes
+    const sectionsCount = await Section.count({ where: { id_period: item.id_period } });
+    const registrationsCount = await Registration.count({ where: { id_period: item.id_period } });
+    
+    if (sectionsCount > 0 || registrationsCount > 0) {
+      return res.status(400).json({ 
+        message: `No se puede eliminar el período porque tiene ${sectionsCount} secciones y ${registrationsCount} inscripciones asociadas. Debe culminarlo en lugar de eliminarlo.` 
+      });
+    }
+
     await item.destroy();
     res.status(204).end();
   } catch (err) {

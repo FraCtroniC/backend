@@ -97,19 +97,26 @@ exports.list = async (req, res, next) => {
     };
 
     if (status_pre && status_pre !== 'Todos') {
-      where.status_pre = { [require('sequelize').Op.iLike]: status_pre };
+      where.status_pre = status_pre;
     }
 
     if (search) {
-      where[require('sequelize').Op.and] = where[require('sequelize').Op.and] || [];
-      where[require('sequelize').Op.and].push({
+      const searchTerms = search.trim().split(/\s+/);
+      const searchConditions = searchTerms.map(term => ({
         [require('sequelize').Op.or]: [
-          { document_id: { [require('sequelize').Op.iLike]: `%${search}%` } },
-          { first_name: { [require('sequelize').Op.iLike]: `%${search}%` } },
-          { first_lastname: { [require('sequelize').Op.iLike]: `%${search}%` } },
-          { email: { [require('sequelize').Op.iLike]: `%${search}%` } }
+          { document_id: { [require('sequelize').Op.iLike]: `%${term}%` } },
+          { first_name: { [require('sequelize').Op.iLike]: `%${term}%` } },
+          { second_name: { [require('sequelize').Op.iLike]: `%${term}%` } },
+          { first_lastname: { [require('sequelize').Op.iLike]: `%${term}%` } },
+          { second_lastname: { [require('sequelize').Op.iLike]: `%${term}%` } },
+          { email: { [require('sequelize').Op.iLike]: `%${term}%` } }
         ]
-      });
+      }));
+      
+      where[require('sequelize').Op.and] = [
+        ...(where[require('sequelize').Op.and] || []),
+        ...searchConditions
+      ];
     }
 
     const { count, rows } = await PreRegistration.findAndCountAll({
