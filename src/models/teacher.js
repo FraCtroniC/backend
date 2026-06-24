@@ -19,6 +19,15 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(20),
       allowNull: true
     },
+    id_academic_title: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'academic_title',
+        key: 'id_academic_title'
+      }
+    },
+
     profession: {
       type: DataTypes.STRING(100),
       allowNull: true

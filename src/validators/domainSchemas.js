@@ -51,6 +51,8 @@ const userCreateSchema = z
     career: z.string().optional().nullable(),
     academic_grade: z.string().optional().nullable(),
     profession: z.string().optional().nullable(),
+    id_academic_title: z.coerce.number().int().positive().optional().nullable(),
+
   })
   .strict()
   .transform(mapLegacyNameFields)
@@ -86,6 +88,8 @@ const userUpdateSchema = z
     career: z.string().trim().optional(),
     academic_grade: z.string().trim().optional(),
     profession: z.string().trim().optional(),
+    id_academic_title: z.coerce.number().int().positive().optional().nullable(),
+
   })
   .strict()
   .transform(mapLegacyNameFields)
@@ -231,6 +235,8 @@ const authRegisterSchema = z
     career: z.string().optional().nullable(),
     academic_grade: z.string().optional().nullable(),
     profession: z.string().optional().nullable(),
+    id_academic_title: z.coerce.number().int().positive().optional().nullable(),
+
   })
   .strict()
   .transform(mapLegacyNameFields)
@@ -369,14 +375,18 @@ const teacherCreateSchema = z
     id_user: uuid,
     academic_grade: z.string().trim().max(20).optional(),
     profession: z.string().trim().max(100).optional(),
+    id_academic_title: z.coerce.number().int().positive().optional().nullable(),
   })
+
   .strict();
 
 const teacherUpdateSchema = z
   .object({
     academic_grade: z.string().trim().max(20).optional(),
     profession: z.string().trim().max(100).optional(),
+    id_academic_title: z.coerce.number().int().positive().optional().nullable(),
   })
+
   .strict()
   .refine((value) => Object.keys(value).length > 0, {
     message: 'Debe enviar al menos un campo para actualizar',

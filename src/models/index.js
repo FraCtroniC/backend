@@ -22,6 +22,7 @@ const Parish = require('./parish')(sequelize, Sequelize.DataTypes);
 const PreRegistration = require('./pre_registration')(sequelize, Sequelize.DataTypes);
 const PreDocument = require('./pre_document')(sequelize, Sequelize.DataTypes);
 const Notification = require('./notification')(sequelize, Sequelize.DataTypes);
+const AcademicTitle = require('./academic_title')(sequelize, Sequelize.DataTypes);
 
 // Associations (basic examples)
 Role.hasMany(User, { foreignKey: 'id_role' });
@@ -62,6 +63,9 @@ User.hasOne(Student, { foreignKey: 'id_user' });
 
 Teacher.belongsTo(User, { foreignKey: 'id_user' });
 User.hasOne(Teacher, { foreignKey: 'id_user' });
+
+AcademicTitle.hasMany(Teacher, { foreignKey: 'id_academic_title' });
+Teacher.belongsTo(AcademicTitle, { foreignKey: 'id_academic_title' });
 
 Career.hasMany(Student, { foreignKey: 'id_career' });
 Student.belongsTo(Career, { foreignKey: 'id_career' });
@@ -133,4 +137,5 @@ module.exports = {
   PreRegistration,
   PreDocument,
   Notification,
+  AcademicTitle,
 };

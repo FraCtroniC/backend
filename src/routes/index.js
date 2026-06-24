@@ -27,6 +27,8 @@ const preDocumentRoutes = require('./preDocumentRoutes');
 const dashboardRoutes = require('./dashboardRoutes');
 const notificationRoutes = require('./notificationRoutes');
 const academicHistoryRoutes = require('./academicHistoryRoutes');
+const academicTitleRoutes = require('./academicTitleRoutes');
+
 
 
 router.get('/', health.ping);
@@ -55,6 +57,8 @@ router.use('/pre-documents', preDocumentRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/academic-history', academicHistoryRoutes);
+router.use('/academic-titles', academicTitleRoutes);
+
 
 
 module.exports = router;

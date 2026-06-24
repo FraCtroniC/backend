@@ -1,5 +1,6 @@
-const { User, Role, Student, Teacher, Career, sequelize } = require('../models');
+const { User, Role, Student, Teacher, Career, AcademicTitle, sequelize } = require('../models');
 const { Op } = require('sequelize');
+
 
 function toSafeUser(userInstance) {
   const user = userInstance.get({ plain: true });
@@ -14,12 +15,14 @@ function toSafeUser(userInstance) {
   }
   
   if (user.Teacher) {
-    user.academic_title = user.Teacher.academic_grade || '';
+    user.academic_title = user.Teacher.AcademicTitle?.name_title || user.Teacher.academic_grade || '';
+    user.id_academic_title = user.Teacher.id_academic_title;
     user.expertise = user.Teacher.profession || 'Pendiente de asignación';
   }
 
   //delete user.password_hash;
   return user;
+
 }
 
 // 1. Listar usuarios con paginación y filtros
@@ -29,9 +32,10 @@ exports.list = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
-    const { search, role, status } = req.query;
+    const { search, role, status, career, academic_title } = req.query;
 
     const where = {};
+
     if (status && status !== 'Todos') {
       where.status = { [Op.iLike]: status };
     }
@@ -71,12 +75,28 @@ exports.list = async (req, res, next) => {
       include: [
         {
           model: Student,
-          include: [Career]
+          include: [
+            {
+              model: Career,
+              where: (role === 'students' && career) ? { name_career: { [Op.iLike]: `%${career.trim()}%` } } : undefined,
+              required: !!(role === 'students' && career)
+            }
+          ],
+          required: !!(role === 'students' && career)
         },
         {
-          model: Teacher
+          model: Teacher,
+          include: [
+            {
+              model: AcademicTitle,
+              where: (role === 'teachers' && academic_title) ? { name_title: { [Op.iLike]: `%${academic_title.trim()}%` } } : undefined,
+              required: !!(role === 'teachers' && academic_title)
+            }
+          ],
+          required: !!(role === 'teachers' && academic_title)
         }
       ]
+
     });
 
     res.json({
@@ -103,8 +123,10 @@ exports.get = async (req, res, next) => {
           include: [Career]
         },
         {
-          model: Teacher
+          model: Teacher,
+          include: [AcademicTitle]
         }
+
       ]
     });
     if (!user) {
@@ -136,7 +158,9 @@ exports.create = async (req, res, next) => {
       career,
       academic_grade,
       profession,
+      id_academic_title,
     } = req.body;
+
 
     const user = await User.create({ 
       id_role, 
@@ -198,12 +222,31 @@ exports.create = async (req, res, next) => {
         admission_date: new Date()
       }, { transaction: t });
     } else if (resolvedRoleName === 'Docente') {
+      let resolvedTitleId = id_academic_title || null;
+      let resolvedGrade = academic_grade;
+      if (!resolvedTitleId && academic_grade) {
+        const titleRecord = await AcademicTitle.findOne({
+          where: { name_title: { [Op.iLike]: academic_grade.trim() } },
+          transaction: t
+        });
+        if (titleRecord) {
+          resolvedTitleId = titleRecord.id_academic_title;
+          resolvedGrade = titleRecord.name_title;
+        }
+      } else if (resolvedTitleId) {
+        const titleRecord = await AcademicTitle.findByPk(resolvedTitleId, { transaction: t });
+        if (titleRecord) {
+          resolvedGrade = titleRecord.name_title;
+        }
+      }
       await Teacher.create({
         id_user: user.id_user,
-        academic_grade: academic_grade || 'Licenciado',
-        profession: profession || 'Docente'
+        id_academic_title: resolvedTitleId,
+        academic_grade: resolvedGrade || 'Licenciado',
+        profession: profession || resolvedGrade || 'Docente'
       }, { transaction: t });
     }
+
 
     await t.commit();
 
@@ -215,8 +258,10 @@ exports.create = async (req, res, next) => {
           include: [Career]
         },
         {
-          model: Teacher
+          model: Teacher,
+          include: [AcademicTitle]
         }
+
       ]
     });
 
@@ -250,7 +295,9 @@ exports.update = async (req, res, next) => {
       career,
       academic_grade,
       profession,
+      id_academic_title,
     } = req.body;
+
 
     let finalPasswordHash = password_hash;
     if (password) {
@@ -299,15 +346,33 @@ exports.update = async (req, res, next) => {
     }
 
     // Update associated Teacher record (academic grade and profession) if applicable
-    if (academic_grade || profession) {
+    if (academic_grade || profession || id_academic_title !== undefined) {
       const teacher = await Teacher.findOne({ where: { id_user: user.id_user } });
       if (teacher) {
+        let resolvedTitleId = id_academic_title !== undefined ? id_academic_title : teacher.id_academic_title;
+        let resolvedGrade = academic_grade || teacher.academic_grade;
+        if (id_academic_title === undefined && academic_grade) {
+          const titleRecord = await AcademicTitle.findOne({
+            where: { name_title: { [Op.iLike]: academic_grade.trim() } }
+          });
+          if (titleRecord) {
+            resolvedTitleId = titleRecord.id_academic_title;
+            resolvedGrade = titleRecord.name_title;
+          }
+        } else if (id_academic_title) {
+          const titleRecord = await AcademicTitle.findByPk(id_academic_title);
+          if (titleRecord) {
+            resolvedGrade = titleRecord.name_title;
+          }
+        }
         await teacher.update({
-          academic_grade: academic_grade || teacher.academic_grade,
-          profession: profession || teacher.profession
+          id_academic_title: resolvedTitleId,
+          academic_grade: resolvedGrade,
+          profession: profession || resolvedGrade || teacher.profession
         });
       }
     }
+
 
     const reloadedUser = await User.findByPk(user.id_user, {
       include: [
@@ -316,8 +381,10 @@ exports.update = async (req, res, next) => {
           include: [Career]
         },
         {
-          model: Teacher
+          model: Teacher,
+          include: [AcademicTitle]
         }
+
       ]
     });
 

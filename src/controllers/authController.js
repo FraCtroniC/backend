@@ -1,5 +1,6 @@
 const { Op } = require('sequelize');
-const { User, Role, Student, Teacher, Career, Registration, RegistrationDetail, sequelize } = require('../models');
+const { User, Role, Student, Teacher, Career, Registration, RegistrationDetail, AcademicTitle, sequelize } = require('../models');
+
 const { signAccessToken } = require('../services/jwtService');
 const config = require('../config/env');
 const { hashPassword, verifyPassword } = require('../services/passwordService');
@@ -22,9 +23,11 @@ function toSafeUser(userInstance) {
   }
 
   if (user.Teacher) {
-    user.academic_title = user.Teacher.academic_grade || '';
+    user.academic_title = user.Teacher.AcademicTitle?.name_title || user.Teacher.academic_grade || '';
+    user.id_academic_title = user.Teacher.id_academic_title;
     user.expertise = user.Teacher.profession || 'Pendiente de asignación';
   }
+
 
   delete user.password_hash;
   return user;
@@ -107,7 +110,9 @@ async function register(req, res, next) {
       career,
       academic_grade,
       profession,
+      id_academic_title,
     } = req.body;
+
 
     const existingUser = await ensureUniqueUser({ username, email, document_id });
     if (existingUser) {
@@ -183,12 +188,31 @@ async function register(req, res, next) {
         admission_date: new Date()
       }, { transaction: t });
     } else if (resolvedRoleName === 'Docente') {
+      let resolvedTitleId = id_academic_title || null;
+      let resolvedGrade = academic_grade;
+      if (!resolvedTitleId && academic_grade) {
+        const titleRecord = await AcademicTitle.findOne({
+          where: { name_title: { [Op.iLike]: academic_grade.trim() } },
+          transaction: t
+        });
+        if (titleRecord) {
+          resolvedTitleId = titleRecord.id_academic_title;
+          resolvedGrade = titleRecord.name_title;
+        }
+      } else if (resolvedTitleId) {
+        const titleRecord = await AcademicTitle.findByPk(resolvedTitleId, { transaction: t });
+        if (titleRecord) {
+          resolvedGrade = titleRecord.name_title;
+        }
+      }
       await Teacher.create({
         id_user: user.id_user,
-        academic_grade: academic_grade || 'Licenciado',
-        profession: profession || 'Docente'
+        id_academic_title: resolvedTitleId,
+        academic_grade: resolvedGrade || 'Licenciado',
+        profession: profession || resolvedGrade || 'Docente'
       }, { transaction: t });
     }
+
 
     await t.commit();
 
@@ -200,8 +224,10 @@ async function register(req, res, next) {
           include: [Career]
         },
         {
-          model: Teacher
+          model: Teacher,
+          include: [AcademicTitle]
         }
+
       ]
     });
 
@@ -224,8 +250,10 @@ async function login(req, res, next) {
           include: [Career]
         },
         {
-          model: Teacher
+          model: Teacher,
+          include: [AcademicTitle]
         }
+
       ]
     });
     if (!user) {
@@ -324,8 +352,10 @@ async function profile(req, res, next) {
         },
         {
           model: Teacher,
+          include: [AcademicTitle],
         },
       ],
+
     });
 
     if (!user) {
@@ -371,8 +401,9 @@ async function profile(req, res, next) {
       lastname: data.first_lastname,
       role: data.Role?.name_role ?? null,
       career: data.Student?.Career?.name_career ?? (data.Role?.name_role === 'Estudiante' ? 'Informática' : ''),
-      academic_title: data.Teacher?.academic_grade ?? '',
+      academic_title: data.Teacher?.AcademicTitle?.name_title ?? data.Teacher?.academic_grade ?? '',
       expertise: data.Teacher?.profession ?? '',
+
       document_id: data.document_id,
       date_birth: data.date_birth,
       cum: calculatedCum,
@@ -435,8 +466,10 @@ async function profileUpdate(req, res, next) {
         },
         {
           model: Teacher,
+          include: [AcademicTitle],
         },
       ],
+
     });
 
     const data = updatedUser.get({ plain: true });
@@ -478,8 +511,9 @@ async function profileUpdate(req, res, next) {
       lastname: data.first_lastname,
       role: data.Role?.name_role ?? null,
       career: data.Student?.Career?.name_career ?? '',
-      academic_title: data.Teacher?.academic_grade ?? '',
+      academic_title: data.Teacher?.AcademicTitle?.name_title ?? data.Teacher?.academic_grade ?? '',
       expertise: data.Teacher?.profession ?? '',
+
       document_id: data.document_id,
       date_birth: data.date_birth,
       cum: calculatedCum,
