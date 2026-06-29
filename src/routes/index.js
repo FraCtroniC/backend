@@ -28,7 +28,7 @@ const dashboardRoutes = require('./dashboardRoutes');
 const notificationRoutes = require('./notificationRoutes');
 const academicHistoryRoutes = require('./academicHistoryRoutes');
 const academicTitleRoutes = require('./academicTitleRoutes');
-
+const chatbotRoutes = require('./chatbotRoutes');
 
 
 router.get('/', health.ping);
@@ -58,7 +58,7 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/academic-history', academicHistoryRoutes);
 router.use('/academic-titles', academicTitleRoutes);
-
+router.use('/chatbot', chatbotRoutes);
 
 
 module.exports = router;
