@@ -1,5 +1,6 @@
 /** Controlador REST de materias por pensum. */
 const { PensumSubject, SubjectPrerequisite } = require('../models');
+const { logActivity } = require('../utils/auditLogger');
 const { Op } = require('sequelize');
 
 // 1. Listar todas las materias de los pensum
@@ -40,6 +41,13 @@ exports.create = async (req, res, next) => {
       code_subject,
     });
     
+    await logActivity(req, {
+      action: 'CREATE',
+      tableAffected: 'Pensum-Materia',
+      recordId: newItem.id_pensum_subject,
+      newValue: `Materia asignada al pensum (id_pensum: ${id_pensum}, code: ${code_subject})`
+    });
+    
     res.status(201).json(newItem);
   } catch (err) { 
     next(err); 
@@ -61,6 +69,13 @@ exports.update = async (req, res, next) => {
       id_subject, 
       id_semester,
       code_subject,
+    });
+
+    await logActivity(req, {
+      action: 'UPDATE',
+      tableAffected: 'Pensum-Materia',
+      recordId: item.id_pensum_subject,
+      newValue: `Relación pensum-materia actualizada (id_pensum: ${id_pensum}, code: ${code_subject})`
     });
 
     res.json(item);
@@ -88,6 +103,14 @@ exports.remove = async (req, res, next) => {
     });
 
     await item.destroy();
+
+    await logActivity(req, {
+      action: 'DELETE',
+      tableAffected: 'Pensum-Materia',
+      recordId: item.id_pensum_subject,
+      newValue: `Materia eliminada del pensum (code: ${item.code_subject})`
+    });
+
     res.status(204).end();
   } catch (err) { 
     next(err); 

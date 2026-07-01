@@ -1,5 +1,6 @@
 /** Controlador REST de solicitudes de documentos. */
 const { DocumentRequest } = require('../models');
+const { logActivity } = require('../utils/auditLogger');
 const NotificationService = require('../services/notificationService');
 
 // 1. Listar todas las solicitudes de documentos
@@ -40,6 +41,13 @@ exports.create = async (req, res, next) => {
       hash_verification 
     });
     
+    await logActivity(req, {
+      action: 'CREATE',
+      tableAffected: 'Solicitud Documento',
+      recordId: newItem.id_request,
+      newValue: `Solicitud de documento creada: ${document_type} (estudiante: ${id_student})`
+    });
+    
     res.status(201).json(newItem);
   } catch (err) { 
     next(err); 
@@ -62,6 +70,13 @@ exports.update = async (req, res, next) => {
       request_date, 
       status, 
       hash_verification 
+    });
+
+    await logActivity(req, {
+      action: 'UPDATE',
+      tableAffected: 'Solicitud Documento',
+      recordId: item.id_request,
+      newValue: `Solicitud de documento actualizada: ${item.document_type} - status: ${status}`
     });
 
     if (status && status !== item.status) {
@@ -88,6 +103,14 @@ exports.remove = async (req, res, next) => {
     }
     
     await item.destroy();
+
+    await logActivity(req, {
+      action: 'DELETE',
+      tableAffected: 'Solicitud Documento',
+      recordId: item.id_request,
+      newValue: `Solicitud de documento eliminada: ${item.document_type}`
+    });
+
     res.status(204).end();
   } catch (err) { 
     next(err); 

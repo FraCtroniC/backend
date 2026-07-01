@@ -190,6 +190,14 @@ exports.remove = async (req, res, next) => {
     }
     
     await item.destroy();
+
+    await logActivity(req, {
+      action: 'DELETE',
+      tableAffected: 'Calificaciones',
+      recordId: item.id_detail,
+      newValue: `Registro de calificaciones eliminado (id: ${item.id_detail})`
+    });
+
     res.status(204).end();
   } catch (err) { 
     next(err); 

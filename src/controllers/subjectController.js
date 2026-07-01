@@ -1,5 +1,6 @@
 /** Controlador REST de materias. */
 const { Subject, PensumSubject, Pensum, Career, SubjectPrerequisite } = require('../models');
+const { logActivity } = require('../utils/auditLogger');
 
 // 1. Listar todas las materias
 exports.list = async (req, res, next) => {
@@ -117,6 +118,13 @@ exports.create = async (req, res, next) => {
     }
     
     // Devolvemos el subject creado/reutilizado y la relación si se creó
+    await logActivity(req, {
+      action: 'CREATE',
+      tableAffected: 'Materia',
+      recordId: subject.id_subject,
+      newValue: `Materia creada: ${subject.name_subject} (${subject.code_subject})${pensumSubject ? ` - asociada al pensum` : ''}`
+    });
+
     res.status(201).json({
       ...subject.toJSON(),
       pensumSubject
@@ -143,6 +151,13 @@ exports.update = async (req, res, next) => {
       credit_units 
     });
 
+    await logActivity(req, {
+      action: 'UPDATE',
+      tableAffected: 'Materia',
+      recordId: subject.id_subject,
+      newValue: `Materia actualizada: ${subject.name_subject} (${subject.code_subject})`
+    });
+
     res.json(subject);
   } catch (err) { 
     next(err); 
@@ -158,6 +173,14 @@ exports.remove = async (req, res, next) => {
     }
     
     await subject.destroy();
+
+    await logActivity(req, {
+      action: 'DELETE',
+      tableAffected: 'Materia',
+      recordId: subject.id_subject,
+      newValue: `Materia eliminada: ${subject.name_subject} (${subject.code_subject})`
+    });
+
     res.status(204).end();
   } catch (err) { 
     next(err); 

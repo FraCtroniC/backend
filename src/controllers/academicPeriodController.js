@@ -123,6 +123,14 @@ exports.remove = async (req, res, next) => {
     }
 
     await item.destroy();
+
+    await logActivity(req, {
+      action: 'DELETE',
+      tableAffected: 'Período Académico',
+      recordId: item.id_period,
+      newValue: `Período académico eliminado: ${item.name_period}`
+    });
+
     res.status(204).end();
   } catch (err) {
     next(err);

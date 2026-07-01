@@ -1,5 +1,6 @@
 /** Controlador REST de pensums. */
 const { Pensum, Career, PensumSubject, Subject, Semester, SubjectPrerequisite } = require('../models');
+const { logActivity } = require('../utils/auditLogger');
 
 // 1. Listar todos los pensum
 exports.list = async (req, res, next) => {
@@ -85,6 +86,13 @@ exports.create = async (req, res, next) => {
       is_active 
     });
     
+    await logActivity(req, {
+      action: 'CREATE',
+      tableAffected: 'Pensum',
+      recordId: newItem.id_pensum,
+      newValue: `Pensum creado: ${name_pensum}`
+    });
+    
     res.status(201).json(newItem);
   } catch (err) { 
     next(err); 
@@ -108,6 +116,13 @@ exports.update = async (req, res, next) => {
       is_active 
     });
 
+    await logActivity(req, {
+      action: 'UPDATE',
+      tableAffected: 'Pensum',
+      recordId: item.id_pensum,
+      newValue: `Pensum actualizado: ${item.name_pensum}`
+    });
+
     res.json(item);
   } catch (err) { 
     next(err); 
@@ -123,6 +138,14 @@ exports.remove = async (req, res, next) => {
     }
     
     await item.destroy();
+
+    await logActivity(req, {
+      action: 'DELETE',
+      tableAffected: 'Pensum',
+      recordId: item.id_pensum,
+      newValue: `Pensum eliminado: ${item.name_pensum}`
+    });
+
     res.status(204).end();
   } catch (err) { 
     next(err); 

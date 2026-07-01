@@ -1,5 +1,6 @@
 /** Controlador REST de carreras. */
 const { Career } = require('../models');
+const { logActivity } = require('../utils/auditLogger');
 
 // 1. Listar todas las carreras
 exports.list = async (req, res, next) => {
@@ -38,6 +39,13 @@ exports.create = async (req, res, next) => {
       is_active 
     });
     
+    await logActivity(req, {
+      action: 'CREATE',
+      tableAffected: 'Carrera',
+      recordId: newItem.id_career,
+      newValue: `Carrera creada: ${name_career} (${code_career})`
+    });
+    
     res.status(201).json(newItem);
   } catch (err) {
     next(err);
@@ -61,6 +69,13 @@ exports.update = async (req, res, next) => {
       is_active 
     });
 
+    await logActivity(req, {
+      action: 'UPDATE',
+      tableAffected: 'Carrera',
+      recordId: item.id_career,
+      newValue: `Carrera actualizada: ${item.name_career} (${item.code_career})`
+    });
+
     res.json(item);
   } catch (err) {
     next(err);
@@ -76,6 +91,14 @@ exports.remove = async (req, res, next) => {
     }
     
     await item.destroy();
+
+    await logActivity(req, {
+      action: 'DELETE',
+      tableAffected: 'Carrera',
+      recordId: item.id_career,
+      newValue: `Carrera eliminada: ${item.name_career} (${item.code_career})`
+    });
+
     res.status(204).end();
   } catch (err) {
     next(err);

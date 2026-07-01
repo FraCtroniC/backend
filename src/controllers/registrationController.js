@@ -1,5 +1,6 @@
 /** Controlador REST de inscripciones. */
 const { Registration } = require('../models');
+const { logActivity } = require('../utils/auditLogger');
 const NotificationService = require('../services/notificationService');
 
 // 1. Listar inscripciones con paginación y relaciones
@@ -75,6 +76,13 @@ exports.create = async (req, res, next) => {
       status 
     });
     
+    await logActivity(req, {
+      action: 'CREATE',
+      tableAffected: 'Inscripción',
+      recordId: newRegistration.id_registration,
+      newValue: `Inscripción creada (estudiante: ${id_student}, período: ${id_period}, status: ${status})`
+    });
+    
     res.status(201).json(newRegistration);
   } catch (err) { 
     next(err); 
@@ -96,6 +104,13 @@ exports.update = async (req, res, next) => {
       id_period, 
       registration_date, 
       status 
+    });
+
+    await logActivity(req, {
+      action: 'UPDATE',
+      tableAffected: 'Inscripción',
+      recordId: registration.id_registration,
+      newValue: `Inscripción actualizada (id: ${registration.id_registration}, status: ${status})`
     });
 
     if (status && status !== registration.status) {
@@ -122,6 +137,14 @@ exports.remove = async (req, res, next) => {
     }
     
     await registration.destroy();
+
+    await logActivity(req, {
+      action: 'DELETE',
+      tableAffected: 'Inscripción',
+      recordId: registration.id_registration,
+      newValue: `Inscripción eliminada (id: ${registration.id_registration})`
+    });
+
     res.status(204).end();
   } catch (err) { 
     next(err); 

@@ -1,4 +1,5 @@
 const { User, Role, Student, Teacher, Career, AcademicTitle, sequelize } = require('../models');
+const { logActivity } = require('../utils/auditLogger');
 const { Op } = require('sequelize');
 
 
@@ -251,6 +252,13 @@ exports.create = async (req, res, next) => {
 
     await t.commit();
 
+    await logActivity(req, {
+      action: 'CREATE',
+      tableAffected: 'Usuario',
+      recordId: user.id_user,
+      newValue: `Usuario creado: ${first_name} ${first_lastname} (${document_id}) - Rol: ${resolvedRoleName}`
+    });
+
     // Reload user with Student and Career to include it in the response
     const reloadedUser = await User.findByPk(user.id_user, {
       include: [
@@ -375,6 +383,13 @@ exports.update = async (req, res, next) => {
     }
 
 
+    await logActivity(req, {
+      action: 'UPDATE',
+      tableAffected: 'Usuario',
+      recordId: user.id_user,
+      newValue: `Usuario actualizado: ${user.first_name} ${user.first_lastname} (${user.document_id})`
+    });
+
     const reloadedUser = await User.findByPk(user.id_user, {
       include: [
         {
@@ -403,6 +418,14 @@ exports.remove = async (req, res, next) => {
     }
 
     await user.destroy();
+
+    await logActivity(req, {
+      action: 'DELETE',
+      tableAffected: 'Usuario',
+      recordId: user.id_user,
+      newValue: `Usuario eliminado: ${user.first_name} ${user.first_lastname} (${user.document_id})`
+    });
+
     res.status(204).end(); // Todo bien, pero no hay contenido que devolver
   } catch (err) {
     next(err);
