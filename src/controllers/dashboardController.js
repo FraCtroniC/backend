@@ -89,34 +89,6 @@ exports.getAdminDashboard = async (req, res, next) => {
                     ((log.action.toLowerCase().includes('create') || log.action.toLowerCase().includes('crear')) ? 'Plus' : 'Clock')
         };
       });
-    } else {
-      // Mock logs for visual demonstration if database has no audit logs yet
-      recentActivity = [
-        { 
-          id: 'act-1', 
-          title: 'Cierre de actas - Período 2026-I', 
-          description: 'Finalizado por Registro Académico. 14,200 notas procesadas.', 
-          time: 'Hace 2 horas', 
-          borderLeftColor: '#051124', 
-          iconName: 'FileCheck' 
-        },
-        { 
-          id: 'act-2', 
-          title: 'Actualización de pensum - Ing. Informática', 
-          description: 'Modificación en 4 asignaturas de nivel superior aprobada.', 
-          time: 'Ayer, 05:15 PM', 
-          borderLeftColor: '#ffd100', 
-          iconName: 'Clock' 
-        },
-        { 
-          id: 'act-3', 
-          title: 'Registro de nuevo estudiante', 
-          description: 'Usuario ana.estudiante creado con rol Estudiante.', 
-          time: 'Hace 2 días', 
-          borderLeftColor: '#22c55e', 
-          iconName: 'User' 
-        }
-      ];
     }
 
     // Uptime and Server Status
@@ -172,22 +144,15 @@ exports.getAdminDashboard = async (req, res, next) => {
         status: activePeriod.period_status
       };
     } else {
-      periodInfo = {
-        name: '2026-I',
-        startDate: '2026-03-01',
-        endDate: '2026-07-30',
-        percentage: 65,
-        daysRemaining: 38,
-        status: 'Activo'
-      };
+      periodInfo = null;
     }
 
     return res.json({
       metrics: {
-        activeStudents: activeStudents || 2840,
-        sectionsCount: sectionsCount || 156,
-        teachersCount: teachersCount || 42,
-        enrollmentsToday: enrollmentsToday || 124
+        activeStudents: activeStudents || 0,
+        sectionsCount: sectionsCount || 0,
+        teachersCount: teachersCount || 0,
+        enrollmentsToday: enrollmentsToday || 0
       },
       recentActivity,
       serverStatus: {

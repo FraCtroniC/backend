@@ -6,6 +6,7 @@ const {
   buildApprovedParams,
   buildRejectedParams,
   buildResetPasswordParams,
+  buildWelcomeParams,
 } = require('./emailjsService');
 
 // ---------------------------------------------------------------------------
@@ -74,6 +75,11 @@ async function sendViaEmailJSRouted(emailType, emailParams, to) {
     case 'reset_password':
       templateId = templateCuenta;
       params = buildResetPasswordParams({ toEmail: to, ...emailParams });
+      break;
+
+    case 'welcome':
+      templateId = templateCuenta;
+      params = buildWelcomeParams({ toEmail: to, ...emailParams });
       break;
 
     default:

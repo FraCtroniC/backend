@@ -41,10 +41,10 @@ const userCreateSchema = z
   .object({
     id_role: positiveInt.optional(),
     document_id: z.string().trim().min(3).max(25),
-    username: z.string().trim().min(3).max(50),
-    password_hash: z.string().min(6),
+    username: z.string().trim().min(3).max(50).optional(),
+    password_hash: z.string().min(6).optional(),
     ...userBaseNameSchema,
-    email: z.string().trim().email().optional().nullable(),
+    email: z.string().trim().email(),
     phone: z.string().trim().max(25).optional(),
     date_birth: z.string().optional().or(z.null()),
     status: userStatusSchema.optional(),
@@ -225,10 +225,10 @@ const authRegisterSchema = z
   .object({
     id_role: positiveInt.optional(),
     document_id: z.string().trim().min(3).max(25),
-    username: z.string().trim().min(3).max(50),
-    password: z.string().min(6).max(100),
+    username: z.string().trim().min(3).max(50).optional(),
+    password: z.string().min(6).max(100).optional(),
     ...userBaseNameSchema,
-    email: z.string().trim().email().optional().nullable(),
+    email: z.string().trim().email(),
     date_birth: z.string().optional().or(z.null()),
     phone: z.string().trim().max(25).optional(),
     status: userStatusSchema.optional(),
@@ -260,7 +260,7 @@ const authRegisterSchema = z
 
 const authLoginSchema = z
   .object({
-    username: z.string().trim().min(3).max(50),
+    email: z.string().trim().email(),
     password: z.string().min(6).max(100),
   })
   .strict();

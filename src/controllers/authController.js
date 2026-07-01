@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const { Op } = require('sequelize');
 const { User, Role, Student, Teacher, Career, Registration, RegistrationDetail, AcademicTitle, sequelize } = require('../models');
 
@@ -52,7 +53,11 @@ function buildAuthResponse(userInstance, expiresIn) {
 }
 
 async function ensureUniqueUser({ username, email, document_id }) {
-  const orConditions = [{ username }];
+  const orConditions = [];
+
+  if (username) {
+    orConditions.push({ username });
+  }
 
   if (email) {
     orConditions.push({ email });
@@ -61,6 +66,8 @@ async function ensureUniqueUser({ username, email, document_id }) {
   if (document_id) {
     orConditions.push({ document_id });
   }
+
+  if (orConditions.length === 0) return null;
 
   return User.findOne({
     where: {
@@ -113,6 +120,7 @@ async function register(req, res, next) {
       id_academic_title,
     } = req.body;
 
+    const finalPassword = password || crypto.randomBytes(4).toString('hex');
 
     const existingUser = await ensureUniqueUser({ username, email, document_id });
     if (existingUser) {
@@ -132,7 +140,7 @@ async function register(req, res, next) {
       id_role: id_role ?? null,
       document_id,
       username,
-      password_hash: hashPassword(password),
+      password_hash: hashPassword(finalPassword),
       first_name,
       second_name,
       first_lastname,
@@ -231,7 +239,28 @@ async function register(req, res, next) {
       ]
     });
 
-    return res.status(201).json(buildAuthResponse(reloadedUser || user));
+    // Si se generó contraseña temporal, enviar correo y devolverla
+    if (!password) {
+      sendEmail({
+        to: email,
+        subject: 'Bienvenido — Credenciales SGUMS',
+        emailType: 'welcome',
+        emailParams: {
+          firstName: first_name || '',
+          lastName: first_lastname || '',
+          email,
+          password: finalPassword,
+        },
+      }).catch(err => {
+        console.error('Error enviando credenciales por correo:', err.message || err);
+      });
+    }
+
+    const response = buildAuthResponse(reloadedUser || user);
+    if (!password) {
+      response.temporal_password = finalPassword;
+    }
+    return res.status(201).json(response);
   } catch (error) {
     await t.rollback();
     return next(error);
@@ -240,10 +269,10 @@ async function register(req, res, next) {
 
 async function login(req, res, next) {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
     const user = await User.findOne({
-      where: { username },
+      where: { email },
       include: [
         {
           model: Student,

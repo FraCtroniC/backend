@@ -141,6 +141,38 @@ function buildRejectedParams({ toEmail, firstName, lastName, verificationCode })
 }
 
 /**
+ * Correo de bienvenida con credenciales (creación manual de usuario por admin).
+ * @param {object} p
+ * @param {string} p.toEmail    - Correo del usuario
+ * @param {string} p.firstName  - Primer nombre
+ * @param {string} p.lastName   - Primer apellido
+ * @param {string} p.email      - Correo (credencial de login)
+ * @param {string} p.password   - Contraseña temporal
+ */
+function buildWelcomeParams({ toEmail, firstName, lastName, email, password }) {
+  const fullName = `${firstName} ${lastName}`.trim();
+  return {
+    to_email: toEmail,
+    name: 'Portal Académico UPTNT',
+    from_name: 'Portal Académico UPTNT',
+    email: 'no-reply@uptnt.edu.ve',
+    reply_to: 'no-reply@uptnt.edu.ve',
+    subject_text: 'Bienvenido — Credenciales SGUMS',
+    greeting: `Hola ${fullName || 'usuario'},`,
+    main_message:
+      'Tu cuenta ha sido creada en el sistema SGUMS. A continuación encontrarás tus credenciales de acceso.',
+    detail_label_1: 'Correo',
+    detail_value_1: email,
+    detail_label_2: 'Contraseña Temporal',
+    detail_value_2: password,
+    cta_label: 'Iniciar sesión en el Portal',
+    cta_url: `${config.frontendUrl}/login`,
+    closing:
+      'Por seguridad, cambia tu contraseña al iniciar sesión. Atentamente, SGUMS - UPTNT Manuela Sáenz',
+  };
+}
+
+/**
  * Correo de recuperación de contraseña (reset password).
  * @param {object} p
  * @param {string} p.toEmail      - Correo del usuario
@@ -175,4 +207,5 @@ module.exports = {
   buildApprovedParams,
   buildRejectedParams,
   buildResetPasswordParams,
+  buildWelcomeParams,
 };
