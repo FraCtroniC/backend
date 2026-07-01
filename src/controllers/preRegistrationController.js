@@ -98,6 +98,8 @@ exports.list = async (req, res, next) => {
 
     if (status_pre && status_pre !== 'Todos') {
       where.status_pre = status_pre;
+    } else {
+      where.status_pre = { [require('sequelize').Op.ne]: 'Aprobado' };
     }
 
     if (search) {

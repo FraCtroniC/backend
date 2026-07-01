@@ -73,6 +73,7 @@ exports.getHistory = async (req, res, next) => {
           }
 
           timeline.push({
+            id_detail: detail.id_detail,
             period: period ? period.name_period : 'Desconocido',
             subject: subject ? subject.name_subject : 'Materia Desconocida',
             grade: grade,
