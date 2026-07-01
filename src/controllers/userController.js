@@ -36,8 +36,9 @@ exports.list = async (req, res, next) => {
 
     const where = {};
 
-    if (status && status !== 'Todos') {
-      where.status = { [Op.iLike]: status };
+    const validStatuses = ['Activo', 'Inactivo', 'Bloqueado'];
+    if (status && status !== 'Todos' && validStatuses.includes(status)) {
+      where.status = status;
     }
 
     if (search) {
