@@ -2,6 +2,7 @@
 const { Registration } = require('../models');
 const { logActivity } = require('../utils/auditLogger');
 const NotificationService = require('../services/notificationService');
+const { checkRegistrationPeriodLocked } = require('../utils/periodLock');
 
 // 1. Listar inscripciones con paginación y relaciones
 exports.list = async (req, res, next) => {
@@ -10,7 +11,13 @@ exports.list = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 50;
     const offset = (page - 1) * limit;
 
+    const where = {};
+    if (req.query.id_period) {
+      where.id_period = parseInt(req.query.id_period);
+    }
+
     const { count, rows } = await Registration.findAndCountAll({ 
+      where,
       limit,
       offset,
       order: [['registration_date', 'DESC']],
@@ -97,6 +104,11 @@ exports.update = async (req, res, next) => {
       return res.status(404).json({ message: 'Inscripción no encontrada' });
     }
 
+    const periodCheck = await checkRegistrationPeriodLocked(registration.id_registration);
+    if (periodCheck.locked) {
+      return res.status(400).json({ message: periodCheck.message });
+    }
+
     const { id_student, id_period, registration_date, status } = req.body;
 
     await registration.update({ 
@@ -134,6 +146,11 @@ exports.remove = async (req, res, next) => {
     const registration = await Registration.findByPk(req.params.id);
     if (!registration) {
       return res.status(404).json({ message: 'Inscripción no encontrada' });
+    }
+
+    const periodCheck = await checkRegistrationPeriodLocked(registration.id_registration);
+    if (periodCheck.locked) {
+      return res.status(400).json({ message: periodCheck.message });
     }
     
     await registration.destroy();

@@ -2,6 +2,7 @@
 const { Section, Career, Subject, Teacher, User, AcademicPeriod } = require('../models');
 const { logActivity } = require('../utils/auditLogger');
 const NotificationService = require('../services/notificationService');
+const { checkSectionPeriodLocked } = require('../utils/periodLock');
 
 // Helper to include associations
 const includeAssociations = [
@@ -11,10 +12,15 @@ const includeAssociations = [
   { model: Teacher, include: [{ model: User }] }
 ];
 
-// 1. Listar todas las secciones
+// 1. Listar secciones (opcional: filtrar por id_period)
 exports.list = async (req, res, next) => {
   try {
+    const where = {};
+    if (req.query.id_period) {
+      where.id_period = parseInt(req.query.id_period);
+    }
     const sections = await Section.findAll({ 
+      where,
       include: includeAssociations,
       order: [['section_code', 'ASC']] 
     });
@@ -101,6 +107,11 @@ exports.update = async (req, res, next) => {
       return res.status(404).json({ message: 'Sección no encontrada' });
     }
 
+    const periodCheck = await checkSectionPeriodLocked(section.id_section);
+    if (periodCheck.locked) {
+      return res.status(400).json({ message: periodCheck.message });
+    }
+
     const { 
       id_period, 
       id_subject, 
@@ -163,6 +174,11 @@ exports.remove = async (req, res, next) => {
     });
     if (!section) {
       return res.status(404).json({ message: 'Sección no encontrada' });
+    }
+
+    const periodCheck = await checkSectionPeriodLocked(section.id_section);
+    if (periodCheck.locked) {
+      return res.status(400).json({ message: periodCheck.message });
     }
     
     const secCode = section.section_code;

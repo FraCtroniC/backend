@@ -184,9 +184,18 @@ exports.update = async (req, res, next) => {
 // 5. Eliminar detalle
 exports.remove = async (req, res, next) => {
   try {
-    const item = await RegistrationDetail.findByPk(req.params.id);
+    const item = await RegistrationDetail.findByPk(req.params.id, {
+      include: [{
+        model: Section,
+        include: [{ model: AcademicPeriod }]
+      }]
+    });
     if (!item) {
       return res.status(404).json({ message: 'Detalle no encontrado' });
+    }
+
+    if (item.Section?.AcademicPeriod?.period_status === 'Culminado') {
+      return res.status(400).json({ message: 'No se puede eliminar porque el período académico ya está Culminado.' });
     }
     
     await item.destroy();

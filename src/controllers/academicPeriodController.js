@@ -14,7 +14,22 @@ exports.list = async (req, res, next) => {
   }
 };
 
-// 2. Obtener un periodo específico
+// 2. Obtener el período activo
+exports.getActive = async (req, res, next) => {
+  try {
+    const activePeriod = await AcademicPeriod.findOne({
+      where: { period_status: 'Activo' }
+    });
+    if (!activePeriod) {
+      return res.status(404).json({ message: 'No hay un período académico activo' });
+    }
+    return res.json(activePeriod);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 3. Obtener un periodo específico
 exports.get = async (req, res, next) => {
   try {
     const item = await AcademicPeriod.findByPk(req.params.id);

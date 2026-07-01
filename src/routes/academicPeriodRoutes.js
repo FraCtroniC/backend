@@ -9,7 +9,10 @@ const { requireAuth } = require('../middlewares/authMiddleware');
 // 1. Listar todos los periodos académicos
 router.get('/', ctrl.list);
 
-// 2. Obtener un periodo específico por ID
+// 2. Obtener el período activo
+router.get('/active', ctrl.getActive);
+
+// 3. Obtener un periodo específico por ID
 router.get('/:id', validateZod({ params: numericIdParam }), ctrl.get);
 
 // 3. Crear periodo (POST)
