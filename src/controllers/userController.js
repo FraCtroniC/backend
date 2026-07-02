@@ -1,13 +1,26 @@
-const { User, Role, Student, Teacher, Career, AcademicTitle, sequelize } = require('../models');
+const { User, Role, Student, Teacher, Career, AcademicTitle, AcademicPeriod, sequelize } = require('../models');
 const { logActivity } = require('../utils/auditLogger');
 const { Op } = require('sequelize');
 
+
+let _activePeriodName = null;
+
+async function getActivePeriodName() {
+  if (_activePeriodName) return _activePeriodName;
+  try {
+    const period = await AcademicPeriod.findOne({ where: { period_status: 'Activo' } });
+    _activePeriodName = period?.name_period || 'Sin período';
+  } catch {
+    _activePeriodName = 'Sin período';
+  }
+  return _activePeriodName;
+}
 
 function toSafeUser(userInstance) {
   const user = userInstance.get({ plain: true });
   
   user.career = '';
-  user.period = '2026-II';
+  user.period = _activePeriodName || '2026-II';
   user.cum = 0;
   
   if (user.Student) {
@@ -101,6 +114,7 @@ exports.list = async (req, res, next) => {
 
     });
 
+    await getActivePeriodName();
     res.json({
       data: rows.map(toSafeUser),
       meta: {
@@ -134,6 +148,7 @@ exports.get = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
+    await getActivePeriodName();
     res.json(toSafeUser(user));
   } catch (err) {
     next(err);
@@ -274,6 +289,7 @@ exports.create = async (req, res, next) => {
       ]
     });
 
+    await getActivePeriodName();
     res.status(201).json(toSafeUser(reloadedUser || user));
   } catch (err) {
     await t.rollback();
@@ -404,6 +420,7 @@ exports.update = async (req, res, next) => {
       ]
     });
 
+    await getActivePeriodName();
     res.json(toSafeUser(reloadedUser || user));
   } catch (err) {
     next(err);
