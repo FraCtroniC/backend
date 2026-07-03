@@ -74,12 +74,11 @@ exports.get = async (req, res, next) => {
 // 3. Crear inscripción (POST)
 exports.create = async (req, res, next) => {
   try {
-    const { id_student, id_period, registration_date, status } = req.body;
+    const { id_student, id_period, status } = req.body;
     
     const newRegistration = await Registration.create({ 
       id_student, 
       id_period, 
-      registration_date, 
       status 
     });
     

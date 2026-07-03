@@ -37,10 +37,12 @@ exports.getAdminDashboard = async (req, res, next) => {
 
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
     const enrollmentsToday = await Registration.count({
       where: {
         registration_date: {
-          [Op.gte]: todayStart
+          [Op.between]: [todayStart, todayEnd]
         }
       }
     });
