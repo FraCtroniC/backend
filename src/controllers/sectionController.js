@@ -123,6 +123,20 @@ exports.update = async (req, res, next) => {
       schedule_info 
     } = req.body;
 
+    if (id_teacher && schedule_info) {
+      const conflict = await Section.findOne({
+        where: {
+          id_teacher,
+          schedule_info,
+          id_period: id_period || section.id_period,
+          id_section: { [require('sequelize').Op.ne]: section.id_section }
+        }
+      });
+      if (conflict) {
+        return res.status(409).json({ message: 'El docente ya tiene asignada otra sección en el mismo horario y día.' });
+      }
+    }
+
     await section.update({ 
       id_period, 
       id_subject, 

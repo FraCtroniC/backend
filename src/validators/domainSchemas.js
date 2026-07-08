@@ -355,7 +355,7 @@ const sectionCreateSchema = z
   .object({
     id_period: positiveInt,
     id_subject: positiveInt,
-    id_teacher: positiveInt,
+    id_teacher: positiveInt.optional(),
     id_career: positiveInt,
     section_code: z.string().trim().min(1).max(10),
     quota_max: z.coerce.number().int().min(1).max(200),
