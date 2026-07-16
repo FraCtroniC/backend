@@ -315,12 +315,16 @@ exports.getStudentDashboard = async (req, res, next) => {
           }]
         });
 
+        const activePeriod = await AcademicPeriod.findOne({ where: { period_status: 'Activo' } });
+        const currentPeriod = activePeriod ? activePeriod.name_period : '2026-II';
+
         let totalGrades = 0;
         let gradesCount = 0;
         let totalCreditsPassed = 0;
         const enrolledClasses = [];
 
         registrations.forEach(reg => {
+          const isCurrentPeriod = activePeriod && Number(reg.id_period) === Number(activePeriod.id_period);
           reg.RegistrationDetails.forEach(detail => {
             if (detail.final_note !== null && detail.final_note !== undefined) {
               totalGrades += Number(detail.final_note);
@@ -329,7 +333,7 @@ exports.getStudentDashboard = async (req, res, next) => {
                 totalCreditsPassed += detail.Section.Subject.credit_units;
               }
             }
-            if (reg.status === 'Inscrito' && detail.Section) {
+            if (isCurrentPeriod && reg.status === 'Inscrito' && detail.Section) {
               enrolledClasses.push({
                 code: detail.Section.Subject?.code_subject || 'N/A',
                 credits: detail.Section.Subject?.credit_units || 0,
@@ -346,8 +350,6 @@ exports.getStudentDashboard = async (req, res, next) => {
         });
 
         const calculatedCum = gradesCount > 0 ? (totalGrades / gradesCount) : 0.0;
-        const activePeriod = await AcademicPeriod.findOne({ where: { period_status: 'Activo' } });
-        const currentPeriod = activePeriod ? activePeriod.name_period : '2026-II';
 
         let faculty = 'Facultad de Ingeniería y Sistemas';
         let director = 'Dra. María Helena Pirela';
