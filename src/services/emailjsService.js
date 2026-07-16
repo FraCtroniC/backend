@@ -83,10 +83,10 @@ function buildAdminNotifParams({ toEmail, aspirantName, document, verificationCo
  * @param {string} p.toEmail    - Correo del aspirante
  * @param {string} p.firstName  - Primer nombre
  * @param {string} p.lastName   - Primer apellido
- * @param {string} p.username   - Usuario generado
+ * @param {string} p.email      - Correo electrónico (credencial de login)
  * @param {string} p.password   - Contraseña temporal generada
  */
-function buildApprovedParams({ toEmail, firstName, lastName, username, password }) {
+function buildApprovedParams({ toEmail, firstName, lastName, email, password }) {
   const fullName = `${firstName} ${lastName}`.trim();
   return {
     to_email: toEmail,
@@ -98,8 +98,8 @@ function buildApprovedParams({ toEmail, firstName, lastName, username, password 
     greeting: `Estimado(a) ${fullName},`,
     main_message:
       '¡Felicitaciones! Tu solicitud de pre-registro ha sido verificada y aprobada por el equipo administrativo de la UPTNT. A continuación encontrarás tus credenciales de acceso al Portal Académico.',
-    detail_label_1: 'Usuario',
-    detail_value_1: username,
+    detail_label_1: 'Correo',
+    detail_value_1: email,
     detail_label_2: 'Contraseña Temporal',
     detail_value_2: password,
     cta_label: 'Iniciar sesión en el Portal',

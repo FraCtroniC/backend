@@ -444,7 +444,7 @@ exports.update = async (req, res, next) => {
         const subject = 'Pre-registro Aprobado - Portal UPTNT';
         const text = `¡Felicidades, ${item.first_name}! Tu solicitud de pre-registro en la UPTNT ha sido aprobada.\n\n` +
           `Hemos creado tu cuenta de acceso al Portal Académico:\n` +
-          `- Usuario: ${user.username}\n` +
+          `- Correo: ${item.email}\n` +
           `- Contraseña Temporal: ${rawPassword}\n\n` +
           `Por razones de seguridad, te sugerimos ingresar al portal y cambiar esta contraseña estándar a la brevedad.\n\n` +
           `Bienvenido a nuestra comunidad académica.`;
@@ -455,7 +455,7 @@ exports.update = async (req, res, next) => {
           body: 'Nos complace informarte que tu solicitud de pre-registro ha sido <strong>verificada y aprobada</strong> por el equipo administrativo de nuestra institución.',
           detailsTitle: 'Tus credenciales de acceso creadas',
           detailsRows: [
-            { label: 'Usuario', value: `<code style="background:#e0e7ff;padding:2px 8px;border-radius:6px;font-size:13px;">${user.username}</code>` },
+            { label: 'Correo', value: `<code style="background:#e0e7ff;padding:2px 8px;border-radius:6px;font-size:13px;">${item.email}</code>` },
             { label: 'Contraseña Temporal', value: `<code style="background:#e0e7ff;padding:2px 8px;border-radius:6px;font-size:13px;">${rawPassword}</code>` },
           ],
           ctaLabel: null,
@@ -473,7 +473,7 @@ exports.update = async (req, res, next) => {
             emailParams: {
               firstName: item.first_name,
               lastName: item.first_lastname,
-              username: user.username,
+              email: item.email,
               password: rawPassword,
             },
           });

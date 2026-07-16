@@ -48,7 +48,7 @@ async function runTests() {
       emailParams: {
         firstName: 'María',
         lastName: 'Rodríguez',
-        username: 'maria.rodriguez',
+        email: TEST_EMAIL,
         password: 'Rodriguez*6789',
       },
     });
