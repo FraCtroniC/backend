@@ -50,6 +50,10 @@ const schema = Joi.object({
   //WEBSITE_URL: Joi.string().uri().default('http://localhost:5174'),
   FRONTEND_URL: Joi.string().uri().default('https://sgumsfrontend.netlify.app'),
   WEBSITE_URL: Joi.string().uri().default('https://sgumswebsite.netlify.app'),
+
+  CLOUDINARY_CLOUD_NAME: Joi.string().required(),
+  CLOUDINARY_API_KEY: Joi.string().required(),
+  CLOUDINARY_API_SECRET: Joi.string().required(),
 }).unknown();
 
 const { value: envVars, error } = schema.validate(process.env);
@@ -96,6 +100,11 @@ module.exports = {
   frontendUrl: envVars.FRONTEND_URL,
   websiteUrl: envVars.WEBSITE_URL,
   adminNotificationEmails: envVars.ADMIN_NOTIFICATION_EMAILS || '',
+  cloudinary: {
+    cloudName: envVars.CLOUDINARY_CLOUD_NAME,
+    apiKey: envVars.CLOUDINARY_API_KEY,
+    apiSecret: envVars.CLOUDINARY_API_SECRET,
+  },
   redis: {
     enabled: envVars.REDIS_ENABLED,
     url: envVars.REDIS_URL || '',
