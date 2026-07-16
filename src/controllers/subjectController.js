@@ -30,9 +30,11 @@ exports.get = async (req, res, next) => {
 exports.create = async (req, res, next) => {
   try {
     const { code_subject, name_subject, credit_units, id_pensum, id_semester, id_prerequisite_pensum_subject, id_prerequisites } = req.body;
+    console.log('[SUBJECT CREATE] Payload recibido:', JSON.stringify({ code_subject, name_subject, credit_units, id_pensum, id_semester, id_prerequisites }));
     
     // 1. Buscar si ya existe la materia a nivel global (por su código único)
     let subject = await Subject.findOne({ where: { code_subject } });
+    console.log('[SUBJECT CREATE] Subject', subject ? `encontrado (id=${subject.id_subject})` : 'NO encontrado, se creará nuevo');
     
     if (!subject) {
       subject = await Subject.create({ 
@@ -58,6 +60,7 @@ exports.create = async (req, res, next) => {
       const combinedCode = `${careerCode}-${code_subject}`;
       
       // Validar si ya existe esta asociación específica materia-pensum
+      console.log('[SUBJECT CREATE] Verificando relación existente: id_pensum=', id_pensum, 'id_subject=', subject.id_subject);
       const existingRelation = await PensumSubject.findOne({
         where: {
           id_pensum,
@@ -66,8 +69,10 @@ exports.create = async (req, res, next) => {
       });
       
       if (existingRelation) {
+        console.log('[SUBJECT CREATE] RELACIÓN YA EXISTE:', JSON.stringify(existingRelation.toJSON()));
         return res.status(400).json({ message: 'La materia ya está asociada a este pensum' });
       }
+      console.log('[SUBJECT CREATE] No existe relación previa, procediendo a crear');
       
       // Validar si el código combinado ya está en uso en este pensum
       const existingCodeRelation = await PensumSubject.findOne({
@@ -87,6 +92,7 @@ exports.create = async (req, res, next) => {
         id_semester,
         code_subject: combinedCode
       });
+      console.log('[SUBJECT CREATE] PensumSubject creado:', pensumSubject.id_pensum_subject, 'code:', combinedCode);
 
       // 3. Registrar prerrequisitos (individuales o múltiples)
       const prereqIds = [];
@@ -132,6 +138,7 @@ exports.create = async (req, res, next) => {
       ...subject.toJSON(),
       pensumSubject
     });
+    console.log('[SUBJECT CREATE] Respuesta 201 enviada OK');
   } catch (err) { 
     next(err); 
   }
