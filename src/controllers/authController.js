@@ -120,7 +120,14 @@ async function register(req, res, next) {
       id_academic_title,
     } = req.body;
 
-    const finalPassword = password || crypto.randomBytes(4).toString('hex');
+    const finalPassword = password || (() => {
+      const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const special = '@#$%&*!?';
+      const upperChar = upper[Math.floor(Math.random() * upper.length)];
+      const specialChar = special[Math.floor(Math.random() * special.length)];
+      const hex = crypto.randomBytes(4).toString('hex');
+      return `${upperChar}${specialChar}${hex}`;
+    })();
 
     const existingUser = await ensureUniqueUser({ username, email, document_id });
     if (existingUser) {

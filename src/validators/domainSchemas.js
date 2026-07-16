@@ -5,6 +5,12 @@ const {
   isoDate,
 } = require('./commonSchemas');
 
+const passwordSchema = z.string()
+  .min(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
+  .max(100, { message: 'La contraseña no puede tener más de 100 caracteres' })
+  .regex(/[A-Z]/, { message: 'La contraseña debe contener al menos una letra mayúscula y un carácter especial' })
+  .regex(/[^a-zA-Z0-9]/, { message: 'La contraseña debe contener al menos una letra mayúscula y un carácter especial' });
+
 const userStatusSchema = z.enum(['Activo', 'Inactivo', 'Bloqueado']);
 const studentStatusSchema = z.enum(['Regular', 'Retirado', 'Egresado', 'Suspendido']);
 const registrationStatusSchema = z.enum(['Inscrito', 'Retirado']);
@@ -42,7 +48,7 @@ const userCreateSchema = z
     id_role: positiveInt.optional(),
     document_id: z.string().trim().min(3).max(25),
     username: z.string().trim().min(3).max(50).optional(),
-    password_hash: z.string().min(6).optional(),
+    password_hash: passwordSchema.optional(),
     ...userBaseNameSchema,
     email: z.string().trim().email(),
     phone: z.string().trim().max(25).optional(),
@@ -78,8 +84,8 @@ const userUpdateSchema = z
   .object({
     id_role: positiveInt.optional(),
     username: z.string().trim().min(3).max(50).optional(),
-    password_hash: z.string().min(6).optional(),
-    password: z.string().min(6).optional(),
+    password_hash: passwordSchema.optional(),
+    password: passwordSchema.optional(),
     ...userBaseNameSchema,
     email: z.string().trim().email().optional().nullable(),
     phone: z.string().trim().max(25).optional(),
@@ -226,7 +232,7 @@ const authRegisterSchema = z
     id_role: positiveInt.optional(),
     document_id: z.string().trim().min(3).max(25),
     username: z.string().trim().min(3).max(50).optional(),
-    password: z.string().min(6).max(100).optional(),
+    password: passwordSchema.optional(),
     ...userBaseNameSchema,
     email: z.string().trim().email(),
     date_birth: z.string().optional().or(z.null()),
@@ -286,8 +292,8 @@ const forgotPasswordSchema = z
 const resetPasswordSchema = z
   .object({
     token: z.string().trim().min(20),
-    newPassword: z.string().min(6).max(100),
-    confirmPassword: z.string().min(6).max(100),
+    newPassword: passwordSchema,
+    confirmPassword: passwordSchema,
   })
   .strict()
   .superRefine((value, ctx) => {
@@ -302,9 +308,9 @@ const resetPasswordSchema = z
 
 const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(6).max(100),
-    newPassword: z.string().min(6).max(100),
-    confirmPassword: z.string().min(6).max(100),
+    currentPassword: z.string().min(1).max(100),
+    newPassword: passwordSchema,
+    confirmPassword: passwordSchema,
   })
   .strict()
   .superRefine((value, ctx) => {
