@@ -4,12 +4,13 @@ const { validateZod } = require('../middlewares/validateZod');
 const { numericIdParam } = require('../validators/commonSchemas');
 const { preRegistrationCreateSchema, preRegistrationUpdateSchema } = require('../validators/domainSchemas');
 const { requireAuth } = require('../middlewares/authMiddleware');
+const { preRegLimiter } = require('../middlewares/rateLimiter');
 
 const router = express.Router();
 
 router.get('/', requireAuth, ctrl.list);
 router.get('/:id', requireAuth, validateZod({ params: numericIdParam }), ctrl.get);
-router.post('/', validateZod({ body: preRegistrationCreateSchema }), ctrl.create);
+router.post('/', preRegLimiter, validateZod({ body: preRegistrationCreateSchema }), ctrl.create);
 router.put('/:id', requireAuth, validateZod({ params: numericIdParam, body: preRegistrationUpdateSchema }), ctrl.update);
 router.delete('/:id', requireAuth, validateZod({ params: numericIdParam }), ctrl.remove);
 

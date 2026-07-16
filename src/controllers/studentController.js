@@ -1,5 +1,6 @@
 /** Controlador REST de estudiantes. */
 const { Student } = require('../models');
+const cacheService = require('../services/cacheService');
 
 // 1. Listar todos los estudiantes
 exports.list = async (req, res, next) => {
@@ -39,6 +40,7 @@ exports.create = async (req, res, next) => {
       admission_date 
     });
     
+    await cacheService.invalidateTags(['students', 'users']);
     res.status(201).json(newStudent);
   } catch (err) { 
     next(err); 
@@ -63,6 +65,7 @@ exports.update = async (req, res, next) => {
       admission_date 
     });
 
+    await cacheService.invalidateTags(['students', 'users']);
     res.json(student);
   } catch (err) { 
     next(err); 
@@ -78,6 +81,7 @@ exports.remove = async (req, res, next) => {
     }
     
     await student.destroy();
+    await cacheService.invalidateTags(['students', 'users']);
     res.status(204).end();
   } catch (err) { 
     next(err); 

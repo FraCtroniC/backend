@@ -3,6 +3,7 @@ const { Section, Career, Subject, Teacher, User, AcademicPeriod } = require('../
 const { logActivity } = require('../utils/auditLogger');
 const NotificationService = require('../services/notificationService');
 const { checkSectionPeriodLocked } = require('../utils/periodLock');
+const cacheService = require('../services/cacheService');
 
 // Helper to include associations
 const includeAssociations = [
@@ -93,6 +94,7 @@ exports.create = async (req, res, next) => {
       console.error('AuditLog section create error:', logErr);
     }
 
+    await cacheService.invalidateTags(['sections', 'teachers']);
     res.status(201).json(populated);
   } catch (err) { 
     next(err); 
@@ -174,6 +176,7 @@ exports.update = async (req, res, next) => {
       console.error('AuditLog section update error:', logErr);
     }
 
+    await cacheService.invalidateTags(['sections', 'teachers']);
     res.json(populated);
   } catch (err) { 
     next(err); 
@@ -211,6 +214,7 @@ exports.remove = async (req, res, next) => {
       console.error('AuditLog section delete error:', logErr);
     }
 
+    await cacheService.invalidateTags(['sections', 'teachers']);
     res.status(204).end();
   } catch (err) { 
     next(err); 

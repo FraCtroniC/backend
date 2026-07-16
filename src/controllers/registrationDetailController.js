@@ -2,6 +2,7 @@
 const { RegistrationDetail, Section, Subject, Registration, Student, User, AcademicPeriod } = require('../models');
 const { logActivity } = require('../utils/auditLogger');
 const NotificationService = require('../services/notificationService');
+const cacheService = require('../services/cacheService');
 
 // 1. Listar todos los detalles de inscripción (Notas)
 exports.list = async (req, res, next) => {
@@ -100,6 +101,7 @@ exports.create = async (req, res, next) => {
       console.error('AuditLog grades create error:', logErr);
     }
     
+    await cacheService.invalidateTags(['grades', 'registrations']);
     res.status(201).json(newItem);
   } catch (err) { 
     next(err); 
@@ -175,6 +177,7 @@ exports.update = async (req, res, next) => {
       console.error('AuditLog grades update error:', logErr);
     }
 
+    await cacheService.invalidateTags(['grades', 'registrations']);
     res.json(item);
   } catch (err) { 
     next(err); 
@@ -207,6 +210,7 @@ exports.remove = async (req, res, next) => {
       newValue: `Registro de calificaciones eliminado (id: ${item.id_detail})`
     });
 
+    await cacheService.invalidateTags(['grades', 'registrations']);
     res.status(204).end();
   } catch (err) { 
     next(err); 

@@ -1,5 +1,6 @@
 /** Controlador REST de docentes. */
 const { Teacher, User, AcademicTitle } = require('../models');
+const cacheService = require('../services/cacheService');
 
 
 // 1. Listar todos los profesores
@@ -67,6 +68,7 @@ exports.create = async (req, res, next) => {
         });
 
 
+        await cacheService.invalidateTags(['teachers']);
         res.status(201).json(newTeacher);
     } catch (err) {
         next(err);
@@ -104,12 +106,12 @@ exports.update = async (req, res, next) => {
         }
 
         await teacher.update({ 
-            id_academic_title: resolvedTitleId,
-            academic_grade: resolvedGrade, 
-            profession: profession || resolvedGrade 
+          id_academic_title: resolvedTitleId,
+          academic_grade: resolvedGrade, 
+          profession: profession || resolvedGrade 
         });
 
-
+        await cacheService.invalidateTags(['teachers']);
         res.json(teacher);
     } catch (err) {
         next(err);
@@ -125,6 +127,7 @@ exports.remove = async (req, res, next) => {
         }
 
         await teacher.destroy();
+        await cacheService.invalidateTags(['teachers']);
         res.status(204).end(); // 204 significa "Todo bien, pero no hay nada que mostrar"
     } catch (err) {
         next(err);

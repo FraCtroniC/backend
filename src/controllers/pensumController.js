@@ -1,6 +1,7 @@
 /** Controlador REST de pensums. */
 const { Pensum, Career, PensumSubject, Subject, Semester, SubjectPrerequisite } = require('../models');
 const { logActivity } = require('../utils/auditLogger');
+const cacheService = require('../services/cacheService');
 
 // 1. Listar todos los pensum
 exports.list = async (req, res, next) => {
@@ -93,6 +94,7 @@ exports.create = async (req, res, next) => {
       newValue: `Pensum creado: ${name_pensum}`
     });
     
+    await cacheService.invalidateTags(['pensums', 'careers']);
     res.status(201).json(newItem);
   } catch (err) { 
     next(err); 
@@ -123,6 +125,7 @@ exports.update = async (req, res, next) => {
       newValue: `Pensum actualizado: ${item.name_pensum}`
     });
 
+    await cacheService.invalidateTags(['pensums', 'careers']);
     res.json(item);
   } catch (err) { 
     next(err); 
@@ -146,6 +149,7 @@ exports.remove = async (req, res, next) => {
       newValue: `Pensum eliminado: ${item.name_pensum}`
     });
 
+    await cacheService.invalidateTags(['pensums', 'careers']);
     res.status(204).end();
   } catch (err) { 
     next(err); 

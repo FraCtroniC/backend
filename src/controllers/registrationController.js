@@ -2,6 +2,7 @@
 const { Registration } = require('../models');
 const { logActivity } = require('../utils/auditLogger');
 const NotificationService = require('../services/notificationService');
+const cacheService = require('../services/cacheService');
 const { checkRegistrationPeriodLocked } = require('../utils/periodLock');
 
 // 1. Listar inscripciones con paginación y relaciones
@@ -89,6 +90,7 @@ exports.create = async (req, res, next) => {
       newValue: `Inscripción creada (estudiante: ${id_student}, período: ${id_period}, status: ${status})`
     });
     
+    await cacheService.invalidateTags(['registrations', 'students']);
     res.status(201).json(newRegistration);
   } catch (err) { 
     next(err); 
@@ -123,6 +125,8 @@ exports.update = async (req, res, next) => {
       recordId: registration.id_registration,
       newValue: `Inscripción actualizada (id: ${registration.id_registration}, status: ${status})`
     });
+
+    await cacheService.invalidateTags(['registrations', 'students']);
 
     if (status && status !== registration.status) {
       await NotificationService.notifyStudent(
@@ -161,6 +165,7 @@ exports.remove = async (req, res, next) => {
       newValue: `Inscripción eliminada (id: ${registration.id_registration})`
     });
 
+    await cacheService.invalidateTags(['registrations', 'students']);
     res.status(204).end();
   } catch (err) { 
     next(err); 

@@ -1,4 +1,5 @@
 const { Municipality } = require('../models');
+const cacheService = require('../services/cacheService');
 
 exports.list = async (req, res, next) => {
   try {
@@ -28,6 +29,7 @@ exports.get = async (req, res, next) => {
 exports.create = async (req, res, next) => {
   try {
     const item = await Municipality.create(req.body);
+    await cacheService.invalidateTag('geo');
     res.status(201).json(item);
   } catch (err) {
     next(err);
@@ -42,6 +44,7 @@ exports.update = async (req, res, next) => {
     }
 
     await item.update(req.body);
+    await cacheService.invalidateTag('geo');
     res.json(item);
   } catch (err) {
     next(err);
@@ -56,6 +59,7 @@ exports.remove = async (req, res, next) => {
     }
 
     await item.destroy();
+    await cacheService.invalidateTag('geo');
     res.status(204).end();
   } catch (err) {
     next(err);

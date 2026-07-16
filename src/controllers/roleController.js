@@ -1,5 +1,6 @@
 /** Controlador REST de roles. */
 const { Role } = require('../models');
+const cacheService = require('../services/cacheService');
 
 // 1. Listar todos los roles
 exports.list = async (req, res, next) => {
@@ -34,6 +35,7 @@ exports.create = async (req, res, next) => {
       description 
     });
     
+    await cacheService.invalidateTag('roles');
     res.status(201).json(newRole);
   } catch (err) { 
     next(err); 
@@ -55,6 +57,7 @@ exports.update = async (req, res, next) => {
       description 
     });
 
+    await cacheService.invalidateTag('roles');
     res.json(role);
   } catch (err) { 
     next(err); 
@@ -70,6 +73,7 @@ exports.remove = async (req, res, next) => {
     }
     
     await role.destroy();
+    await cacheService.invalidateTag('roles');
     res.status(204).end();
   } catch (err) { 
     next(err); 

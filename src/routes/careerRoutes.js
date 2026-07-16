@@ -4,12 +4,13 @@ const ctrl = require('../controllers/careerController');
 const { validateZod } = require('../middlewares/validateZod');
 const { numericIdParam } = require('../validators/commonSchemas');
 const { careerCreateSchema, careerUpdateSchema } = require('../validators/domainSchemas');
+const { cacheResponse } = require('../middlewares/cacheMiddleware');
 
 // 1. Listar todas las carreras
-router.get('/', ctrl.list);
+router.get('/', cacheResponse(600, 'careers'), ctrl.list);
 
 // 2. Obtener carrera por ID
-router.get('/:id', validateZod({ params: numericIdParam }), ctrl.get);
+router.get('/:id', validateZod({ params: numericIdParam }), cacheResponse(600, 'careers'), ctrl.get);
 
 // 3. Crear carrera (POST)
 router.post('/', validateZod({ body: careerCreateSchema }), ctrl.create);

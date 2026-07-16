@@ -1,5 +1,6 @@
 const { Semester } = require('../models');
 const { logActivity } = require('../utils/auditLogger');
+const cacheService = require('../services/cacheService');
 
 exports.list = async (req, res, next) => {
   try {
@@ -31,6 +32,7 @@ exports.create = async (req, res, next) => {
       recordId: item.id_semester,
       newValue: `Semestre creado: ${item.name_semester}`
     });
+    await cacheService.invalidateTag('semesters');
     res.status(201).json(item);
   } catch (err) {
     next(err);
@@ -51,6 +53,7 @@ exports.update = async (req, res, next) => {
       recordId: item.id_semester,
       newValue: `Semestre actualizado: ${item.name_semester}`
     });
+    await cacheService.invalidateTag('semesters');
     res.json(item);
   } catch (err) {
     next(err);
@@ -71,6 +74,7 @@ exports.remove = async (req, res, next) => {
       recordId: item.id_semester,
       newValue: `Semestre eliminado: ${item.name_semester}`
     });
+    await cacheService.invalidateTag('semesters');
     res.status(204).end();
   } catch (err) {
     next(err);

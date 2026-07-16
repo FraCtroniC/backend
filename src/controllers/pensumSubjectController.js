@@ -3,6 +3,7 @@ const { PensumSubject, SubjectPrerequisite, Subject, User, Section } = require('
 const { logActivity } = require('../utils/auditLogger');
 const { Op } = require('sequelize');
 const { verifyPassword } = require('../services/passwordService');
+const cacheService = require('../services/cacheService');
 
 // 1. Listar todas las materias de los pensum
 exports.list = async (req, res, next) => {
@@ -49,6 +50,7 @@ exports.create = async (req, res, next) => {
       newValue: `Materia asignada al pensum (id_pensum: ${id_pensum}, code: ${code_subject})`
     });
     
+    await cacheService.invalidateTags(['pensums', 'subjects']);
     res.status(201).json(newItem);
   } catch (err) { 
     next(err); 
@@ -79,6 +81,7 @@ exports.update = async (req, res, next) => {
       newValue: `Relación pensum-materia actualizada (id_pensum: ${id_pensum}, code: ${code_subject})`
     });
 
+    await cacheService.invalidateTags(['pensums', 'subjects']);
     res.json(item);
   } catch (err) { 
     next(err); 
@@ -171,6 +174,7 @@ exports.remove = async (req, res, next) => {
       }
     }
 
+    await cacheService.invalidateTags(['pensums', 'subjects']);
     res.status(204).end();
   } catch (err) { 
     next(err); 
@@ -259,6 +263,7 @@ exports.fullRemove = async (req, res, next) => {
       });
     }
 
+    await cacheService.invalidateTags(['pensums', 'subjects']);
     res.status(200).json({ message: 'Materia eliminada exitosamente' });
   } catch (err) { 
     next(err); 

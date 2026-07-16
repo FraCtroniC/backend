@@ -5,12 +5,13 @@ const { requireAuth } = require('../middlewares/authMiddleware');
 const { validateZod } = require('../middlewares/validateZod');
 const { numericIdParam } = require('../validators/commonSchemas');
 const { pensumSubjectCreateSchema, pensumSubjectUpdateSchema } = require('../validators/domainSchemas');
+const { cacheResponse } = require('../middlewares/cacheMiddleware');
 
 // 1. Listar todas las materias asignadas a pensums
-router.get('/', ctrl.list);
+router.get('/', cacheResponse(600, 'pensums', 'subjects'), ctrl.list);
 
 // 2. Obtener una asignación específica por su ID
-router.get('/:id', validateZod({ params: numericIdParam }), ctrl.get);
+router.get('/:id', validateZod({ params: numericIdParam }), cacheResponse(600, 'pensums', 'subjects'), ctrl.get);
 
 // 3. Crear asignación (POST)
 router.post('/', validateZod({ body: pensumSubjectCreateSchema }), ctrl.create);

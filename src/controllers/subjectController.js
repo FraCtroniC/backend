@@ -1,6 +1,7 @@
 /** Controlador REST de materias. */
 const { Subject, PensumSubject, Pensum, Career, SubjectPrerequisite } = require('../models');
 const { logActivity } = require('../utils/auditLogger');
+const cacheService = require('../services/cacheService');
 
 // 1. Listar todas las materias
 exports.list = async (req, res, next) => {
@@ -117,6 +118,8 @@ exports.create = async (req, res, next) => {
       }
     }
     
+    await cacheService.invalidateTags(['subjects', 'pensums']);
+
     // Devolvemos el subject creado/reutilizado y la relación si se creó
     await logActivity(req, {
       action: 'CREATE',
@@ -158,6 +161,7 @@ exports.update = async (req, res, next) => {
       newValue: `Materia actualizada: ${subject.name_subject} (${subject.code_subject})`
     });
 
+    await cacheService.invalidateTags(['subjects', 'pensums']);
     res.json(subject);
   } catch (err) { 
     next(err); 
@@ -181,6 +185,7 @@ exports.remove = async (req, res, next) => {
       newValue: `Materia eliminada: ${subject.name_subject} (${subject.code_subject})`
     });
 
+    await cacheService.invalidateTags(['subjects', 'pensums']);
     res.status(204).end();
   } catch (err) { 
     next(err); 

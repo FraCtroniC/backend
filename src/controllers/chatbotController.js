@@ -1,5 +1,7 @@
 const https = require('https');
+const crypto = require('crypto');
 const { openaiApiKey } = require('../config/env');
+const cacheService = require('../services/cacheService');
 
 const FORMAT_RULES = `\nREGLAS DE FORMATO OBLIGATORIAS:\n- Divide siempre tus respuestas en parrafos cortos separados por un doble salto de linea.\n- Si explicas un proceso paso a paso, utiliza listas numeradas donde cada paso empiece obligatoriamente en una nueva linea.\n- Si enumeras requisitos o campos, utiliza viñetas (-) donde cada elemento tenga su propia linea.\n- PROHIBIDO amontonar o agrupar pasos o listas en un solo bloque denso de texto.`;
 
@@ -193,16 +195,27 @@ async function consultar(req, res, next) {
       return res.status(503).json({ error: 'El servicio de IA no esta configurado (falta OPENAI_API_KEY).' });
     }
 
-    const nombreUsuario = nombre?.trim() || 'Usuario';
-    const systemPrompt = `${SYSTEM_PROMPTS[roleId]}\n\nEl usuario que te consulta se llama ${nombreUsuario}. Dirígete a el por su nombre cuando sea apropiado.`;
-    const data = await llamarOpenAI(mensaje, systemPrompt);
+    const cacheKey = `chatbot:${crypto.createHash('md5').update(`${mensaje.trim().toLowerCase()}:${roleId}`).digest('hex')}`;
 
-    const textoRespuesta = data?.choices?.[0]?.message?.content || 'Lo siento, no pude procesar tu consulta.';
+    const data = await cacheService.remember(
+      cacheKey,
+      3600,
+      [],
+      async () => {
+        const nombreUsuario = nombre?.trim() || 'Usuario';
+        const systemPrompt = `${SYSTEM_PROMPTS[roleId]}\n\nEl usuario que te consulta se llama ${nombreUsuario}. Dirígete a el por su nombre cuando sea apropiado.`;
+        const response = await llamarOpenAI(mensaje, systemPrompt);
 
-    res.json({
-      respuesta: textoRespuesta,
-      role: ROLE_NAMES[roleId],
-    });
+        const textoRespuesta = response?.choices?.[0]?.message?.content || 'Lo siento, no pude procesar tu consulta.';
+
+        return {
+          respuesta: textoRespuesta,
+          role: ROLE_NAMES[roleId],
+        };
+      }
+    );
+
+    res.json(data);
   } catch (err) {
     console.error('Groq error final:', err.message);
     res.status(502).json({

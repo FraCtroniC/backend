@@ -4,6 +4,7 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const { validateZod } = require('../middlewares/validateZod');
 const { requireAuth } = require('../middlewares/authMiddleware');
+const { loginLimiter } = require('../middlewares/rateLimiter');
 const {
   tokenIssueSchema,
   authRegisterSchema,
@@ -15,7 +16,7 @@ const {
 } = require('../validators/domainSchemas');
 
 router.post('/register', validateZod({ body: authRegisterSchema }), authController.register);
-router.post('/login', validateZod({ body: authLoginSchema }), authController.login);
+router.post('/login', loginLimiter, validateZod({ body: authLoginSchema }), authController.login);
 router.post(
   '/forgot-password',
   validateZod({ body: forgotPasswordSchema }),

@@ -5,12 +5,13 @@ const { validateZod } = require('../middlewares/validateZod');
 const { numericIdParam } = require('../validators/commonSchemas');
 const { sectionCreateSchema, sectionUpdateSchema } = require('../validators/domainSchemas');
 const { requireAuth } = require('../middlewares/authMiddleware');
+const { cacheResponse } = require('../middlewares/cacheMiddleware');
 
 // Listar todas las secciones
-router.get('/', ctrl.list);
+router.get('/', cacheResponse(300, 'sections'), ctrl.list);
 
 // Obtener una específica
-router.get('/:id', validateZod({ params: numericIdParam }), ctrl.get);
+router.get('/:id', validateZod({ params: numericIdParam }), cacheResponse(300, 'sections'), ctrl.get);
 
 // Crear sección (POST)
 router.post('/', requireAuth, validateZod({ body: sectionCreateSchema }), ctrl.create);

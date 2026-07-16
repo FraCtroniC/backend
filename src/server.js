@@ -4,11 +4,13 @@ const app = require(path.join(__dirname, 'app'));
 const socket = require(path.join(__dirname, 'socket'));
 const config = require(path.join(__dirname, 'config', 'env'));
 const { testConnection } = require(path.join(__dirname, 'config', 'database'));
+const { connectRedis } = require(path.join(__dirname, 'config', 'redis'));
 
 const port = config.port || 3000;
 
 async function start() {
   const ok = await testConnection();
+  await connectRedis();
   if (!ok) {
     console.error('Database connection failed. Exiting.');
     process.exit(1);

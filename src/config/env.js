@@ -38,6 +38,14 @@ const schema = Joi.object({
   EMAILJS_TEMPLATE_ID_ADMIN: Joi.string().when('EMAIL_TRANSPORT', { is: 'emailjs', then: Joi.required() }),
   EMAILJS_TEMPLATE_ID_CUENTA: Joi.string().when('EMAIL_TRANSPORT', { is: 'emailjs', then: Joi.required() }),
   OPENAI_API_KEY: Joi.string().allow('').default(''),
+
+  REDIS_ENABLED: Joi.boolean().default(true),
+  REDIS_URL: Joi.string().uri().allow('').optional(),
+  REDIS_HOST: Joi.string().default('localhost'),
+  REDIS_PORT: Joi.number().default(6379),
+  REDIS_PASSWORD: Joi.string().allow('').default(''),
+  REDIS_DB: Joi.number().default(0),
+
   //FRONTEND_URL: Joi.string().uri().default('http://localhost:5173'),
   //WEBSITE_URL: Joi.string().uri().default('http://localhost:5174'),
   FRONTEND_URL: Joi.string().uri().default('https://sgumsfrontend.netlify.app'),
@@ -88,4 +96,12 @@ module.exports = {
   frontendUrl: envVars.FRONTEND_URL,
   websiteUrl: envVars.WEBSITE_URL,
   adminNotificationEmails: envVars.ADMIN_NOTIFICATION_EMAILS || '',
+  redis: {
+    enabled: envVars.REDIS_ENABLED,
+    url: envVars.REDIS_URL || '',
+    host: envVars.REDIS_HOST,
+    port: envVars.REDIS_PORT,
+    password: envVars.REDIS_PASSWORD,
+    db: envVars.REDIS_DB,
+  },
 };

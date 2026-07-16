@@ -1,6 +1,7 @@
 const { AcademicPeriod, AuditLog, Section, Registration } = require('../models');
 const { logActivity } = require('../utils/auditLogger');
 const NotificationService = require('../services/notificationService');
+const cacheService = require('../services/cacheService');
 
 // 1. Listar todos los periodos (ordenados por fecha de inicio)
 exports.list = async (req, res, next) => {
@@ -72,6 +73,8 @@ exports.create = async (req, res, next) => {
       newValue: `Creado el período académico ${name_period}`
     });
 
+    await cacheService.invalidateTag('periods');
+
     if (item.period_status === 'Activo') {
       await NotificationService.notifyAllUsers('Nuevo Período Académico', `¡El período académico ${item.name_period} ahora está Activo!`, 'success');
     }
@@ -111,6 +114,8 @@ exports.update = async (req, res, next) => {
       newValue: `Modificado el período académico ${oldName}. Estatus: ${item.period_status}, Inscripción: ${item.enrollment_status}`
     });
 
+    await cacheService.invalidateTag('periods');
+
     if (item.period_status === 'Activo' && oldStatus !== 'Activo') {
       await NotificationService.notifyAllUsers('Nuevo Período Académico', `¡El período académico ${item.name_period} ahora está Activo!`, 'success');
     }
@@ -146,6 +151,7 @@ exports.remove = async (req, res, next) => {
       newValue: `Período académico eliminado: ${item.name_period}`
     });
 
+    await cacheService.invalidateTag('periods');
     res.status(204).end();
   } catch (err) {
     next(err);

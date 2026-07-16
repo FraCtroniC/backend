@@ -1,6 +1,7 @@
 const { User, Role, Student, Teacher, Career, AcademicTitle, AcademicPeriod, sequelize } = require('../models');
 const { logActivity } = require('../utils/auditLogger');
 const { Op } = require('sequelize');
+const cacheService = require('../services/cacheService');
 
 
 let _activePeriodName = null;
@@ -290,6 +291,7 @@ exports.create = async (req, res, next) => {
     });
 
     await getActivePeriodName();
+    await cacheService.invalidateTags(['users', 'students', 'teachers']);
     res.status(201).json(toSafeUser(reloadedUser || user));
   } catch (err) {
     await t.rollback();
@@ -421,6 +423,7 @@ exports.update = async (req, res, next) => {
     });
 
     await getActivePeriodName();
+    await cacheService.invalidateTags(['users', 'students', 'teachers']);
     res.json(toSafeUser(reloadedUser || user));
   } catch (err) {
     next(err);
@@ -443,6 +446,7 @@ exports.remove = async (req, res, next) => {
       newValue: `Usuario eliminado: ${user.first_name} ${user.first_lastname} (${user.document_id})`
     });
 
+    await cacheService.invalidateTags(['users', 'students', 'teachers']);
     res.status(204).end(); // Todo bien, pero no hay contenido que devolver
   } catch (err) {
     next(err);

@@ -4,8 +4,9 @@ const userController = require('../controllers/userController');
 const { validateZod } = require('../middlewares/validateZod');
 const { uuidIdParam } = require('../validators/commonSchemas');
 const { userCreateSchema, userUpdateSchema } = require('../validators/domainSchemas');
+const { cacheResponse } = require('../middlewares/cacheMiddleware');
 
-router.get('/', userController.list);
+router.get('/', cacheResponse(300, 'users'), userController.list);
 
 router.post(
   '/',
@@ -13,7 +14,7 @@ router.post(
   userController.create
 );
 
-router.get('/:id', validateZod({ params: uuidIdParam }), userController.get);
+router.get('/:id', validateZod({ params: uuidIdParam }), cacheResponse(300, 'users'), userController.get);
 router.put('/:id', validateZod({ params: uuidIdParam, body: userUpdateSchema }), userController.update);
 router.delete('/:id', validateZod({ params: uuidIdParam }), userController.remove);
 

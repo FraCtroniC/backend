@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const health = require('../controllers/healthController');
+
 const authRoutes = require('./authRoutes');
 const userRoutes = require('./userRoutes');
 const careerRoutes = require('./careerRoutes');

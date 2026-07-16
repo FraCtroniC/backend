@@ -5,15 +5,16 @@ const { validateZod } = require('../middlewares/validateZod');
 const { numericIdParam } = require('../validators/commonSchemas');
 const { academicPeriodCreateSchema, academicPeriodUpdateSchema } = require('../validators/domainSchemas');
 const { requireAuth } = require('../middlewares/authMiddleware');
+const { cacheResponse } = require('../middlewares/cacheMiddleware');
 
 // 1. Listar todos los periodos académicos
-router.get('/', ctrl.list);
+router.get('/', cacheResponse(300, 'periods'), ctrl.list);
 
 // 2. Obtener el período activo
-router.get('/active', ctrl.getActive);
+router.get('/active', cacheResponse(120, 'periods'), ctrl.getActive);
 
 // 3. Obtener un periodo específico por ID
-router.get('/:id', validateZod({ params: numericIdParam }), ctrl.get);
+router.get('/:id', validateZod({ params: numericIdParam }), cacheResponse(300, 'periods'), ctrl.get);
 
 // 3. Crear periodo (POST)
 router.post('/', requireAuth, validateZod({ body: academicPeriodCreateSchema }), ctrl.create);

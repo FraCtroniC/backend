@@ -1,6 +1,7 @@
 /** Controlador REST de carreras. */
 const { Career } = require('../models');
 const { logActivity } = require('../utils/auditLogger');
+const cacheService = require('../services/cacheService');
 
 // 1. Listar todas las carreras
 exports.list = async (req, res, next) => {
@@ -46,6 +47,7 @@ exports.create = async (req, res, next) => {
       newValue: `Carrera creada: ${name_career} (${code_career})`
     });
     
+    await cacheService.invalidateTag('careers');
     res.status(201).json(newItem);
   } catch (err) {
     next(err);
@@ -76,6 +78,7 @@ exports.update = async (req, res, next) => {
       newValue: `Carrera actualizada: ${item.name_career} (${item.code_career})`
     });
 
+    await cacheService.invalidateTag('careers');
     res.json(item);
   } catch (err) {
     next(err);
@@ -99,6 +102,7 @@ exports.remove = async (req, res, next) => {
       newValue: `Carrera eliminada: ${item.name_career} (${item.code_career})`
     });
 
+    await cacheService.invalidateTag('careers');
     res.status(204).end();
   } catch (err) {
     next(err);

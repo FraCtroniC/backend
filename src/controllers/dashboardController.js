@@ -13,6 +13,7 @@ const {
   PreRegistration
 } = require('../models');
 const { Op } = require('sequelize');
+const cacheService = require('../services/cacheService');
 
 // Helper to format time ago for audit logs
 function formatTimeAgo(date) {
@@ -30,144 +31,111 @@ function formatTimeAgo(date) {
 // 1. Admin Dashboard Stats
 exports.getAdminDashboard = async (req, res, next) => {
   try {
-    // Queries
-    const activeStudents = await Student.count({ where: { status: 'Regular' } });
-    const sectionsCount = await Section.count();
-    const teachersCount = await Teacher.count();
+    const userId = req.auth?.sub || 'anonymous';
+    const data = await cacheService.remember(
+      `dashboard:admin:${userId}`,
+      120,
+      ['students', 'sections', 'teachers', 'registrations', 'users', 'periods', 'grades', 'preregistrations'],
+      async () => {
+        const activeStudents = await Student.count({ where: { status: 'Regular' } });
+        const sectionsCount = await Section.count();
+        const teachersCount = await Teacher.count();
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
-    const enrollmentsToday = await Registration.count({
-      where: {
-        registration_date: {
-          [Op.between]: [todayStart, todayEnd]
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+        const enrollmentsToday = await Registration.count({
+          where: { registration_date: { [Op.between]: [todayStart, todayEnd] } }
+        });
+
+        const logs = await AuditLog.findAll({
+          limit: 15,
+          order: [['created_at', 'DESC']],
+          include: [{ model: User, attributes: ['first_name', 'first_lastname', 'username'] }]
+        });
+
+        let recentActivity = [];
+        if (logs && logs.length > 0) {
+          recentActivity = logs.map(log => {
+            let title = 'Acción del sistema';
+            let color = '#ffd100';
+            if (log.action.toLowerCase().includes('create') || log.action.toLowerCase().includes('crear')) {
+              title = `Creación de ${log.table_affected}`;
+              color = '#22c55e';
+            } else if (log.action.toLowerCase().includes('delete') || log.action.toLowerCase().includes('eliminar')) {
+              title = `Eliminación en ${log.table_affected}`;
+              color = '#ef4444';
+            } else if (log.action.toLowerCase().includes('update') || log.action.toLowerCase().includes('actualizar')) {
+              title = `Modificación de ${log.table_affected}`;
+              color = '#3b82f6';
+            }
+            let authorText = '';
+            if (log.User) {
+              const name = [log.User.first_name, log.User.first_lastname].filter(Boolean).join(' ');
+              authorText = name ? ` por ${name}` : ` por @${log.User.username}`;
+            }
+            return {
+              id: log.id_log,
+              title,
+              description: `${log.new_value || `ID registro: ${log.record_id}. Acción: ${log.action}`}${authorText}`,
+              time: formatTimeAgo(log.created_at),
+              borderLeftColor: color,
+              iconName: log.action.toLowerCase().includes('delete') ? 'Trash' :
+                ((log.action.toLowerCase().includes('create') || log.action.toLowerCase().includes('crear')) ? 'Plus' : 'Clock')
+            };
+          });
         }
-      }
-    });
 
-    const logs = await AuditLog.findAll({
-      limit: 15,
-      order: [['created_at', 'DESC']],
-      include: [{
-        model: User,
-        attributes: ['first_name', 'first_lastname', 'username']
-      }]
-    });
+        const cpuLoad = Math.floor(15 + Math.random() * 15);
 
-    // Format logs for dashboard activity list
-    let recentActivity = [];
-    if (logs && logs.length > 0) {
-      recentActivity = logs.map(log => {
-        let title = 'Acción del sistema';
-        let color = '#ffd100'; // warning (yellow)
+        const pendingPreRegistrations = await PreRegistration.count({ where: { status_pre: 'Pendiente' } });
+        const sectionsWithoutTeacher = await Section.count({ where: { id_teacher: null } });
+        const pendingGradesConfirmations = await RegistrationDetail.count({ where: { grade_status: 'Cargando' } });
 
-        if (log.action.toLowerCase().includes('create') || log.action.toLowerCase().includes('crear')) {
-          title = `Creación de ${log.table_affected}`;
-          color = '#22c55e'; // success (green)
-        } else if (log.action.toLowerCase().includes('delete') || log.action.toLowerCase().includes('eliminar')) {
-          title = `Eliminación en ${log.table_affected}`;
-          color = '#ef4444'; // danger (red)
-        } else if (log.action.toLowerCase().includes('update') || log.action.toLowerCase().includes('actualizar')) {
-          title = `Modificación de ${log.table_affected}`;
-          color = '#3b82f6'; // info (blue)
-        }
-
-        // Generate dynamic author string
-        let authorText = '';
-        if (log.User) {
-          const name = [log.User.first_name, log.User.first_lastname].filter(Boolean).join(' ');
-          authorText = name ? ` por ${name}` : ` por @${log.User.username}`;
+        let periodInfo = null;
+        const activePeriod = await AcademicPeriod.findOne({ where: { period_status: 'Activo' } });
+        if (activePeriod) {
+          const start = new Date(activePeriod.start_date);
+          const end = new Date(activePeriod.end_date);
+          const today = new Date();
+          const totalTime = end - start;
+          const passedTime = today - start;
+          let percentage = 0;
+          if (totalTime > 0) {
+            percentage = Math.min(100, Math.max(0, Math.round((passedTime / totalTime) * 100)));
+          }
+          const oneDay = 24 * 60 * 60 * 1000;
+          const daysRemaining = Math.max(0, Math.round((end - today) / oneDay));
+          periodInfo = {
+            name: activePeriod.name_period,
+            startDate: activePeriod.start_date,
+            endDate: activePeriod.end_date,
+            percentage,
+            daysRemaining,
+            status: activePeriod.period_status
+          };
         }
 
         return {
-          id: log.id_log,
-          title,
-          description: `${log.new_value || `ID registro: ${log.record_id}. Acción: ${log.action}`}${authorText}`,
-          time: formatTimeAgo(log.created_at),
-          borderLeftColor: color,
-          iconName: log.action.toLowerCase().includes('delete') ? 'Trash' : 
-                    ((log.action.toLowerCase().includes('create') || log.action.toLowerCase().includes('crear')) ? 'Plus' : 'Clock')
+          metrics: {
+            activeStudents: activeStudents || 0,
+            sectionsCount: sectionsCount || 0,
+            teachersCount: teachersCount || 0,
+            enrollmentsToday: enrollmentsToday || 0
+          },
+          recentActivity,
+          serverStatus: { cpuLoad },
+          pendingTasks: {
+            preRegistrations: pendingPreRegistrations || 0,
+            sectionsWithoutTeacher: sectionsWithoutTeacher || 0,
+            gradesConfirmations: pendingGradesConfirmations || 0
+          },
+          periodInfo
         };
-      });
-    }
-
-    // Uptime and Server Status
-    const uptimeSeconds = process.uptime() + (142 * 24 * 60 * 60); // 142 days base offset
-    const days = Math.floor(uptimeSeconds / (24 * 3600));
-    const hours = Math.floor((uptimeSeconds % (24 * 3600)) / 3600);
-    const minutes = Math.floor((uptimeSeconds % 3600) / 60);
-    const seconds = Math.floor(uptimeSeconds % 60);
-    const uptimeString = `${days} días, ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-    // Dynamic CPU load calculation (fluctuates realistically)
-    const cpuLoad = Math.floor(15 + Math.random() * 15); // between 15% and 30%
-
-    // Count pending admin tasks dynamically
-    const pendingPreRegistrations = await PreRegistration.count({
-      where: { status_pre: 'Pendiente' }
-    });
-    const sectionsWithoutTeacher = await Section.count({
-      where: { id_teacher: null }
-    });
-    const pendingGradesConfirmations = await RegistrationDetail.count({
-      where: { grade_status: 'Cargando' }
-    });
-
-    // Calculate academic period progress
-    let periodInfo = null;
-    const activePeriod = await AcademicPeriod.findOne({
-      where: { period_status: 'Activo' }
-    });
-
-    if (activePeriod) {
-      const start = new Date(activePeriod.start_date);
-      const end = new Date(activePeriod.end_date);
-      const today = new Date();
-
-      const totalTime = end - start;
-      const passedTime = today - start;
-
-      let percentage = 0;
-      if (totalTime > 0) {
-        percentage = Math.min(100, Math.max(0, Math.round((passedTime / totalTime) * 100)));
       }
-
-      const oneDay = 24 * 60 * 60 * 1000;
-      const daysRemaining = Math.max(0, Math.round((end - today) / oneDay));
-
-      periodInfo = {
-        name: activePeriod.name_period,
-        startDate: activePeriod.start_date,
-        endDate: activePeriod.end_date,
-        percentage,
-        daysRemaining,
-        status: activePeriod.period_status
-      };
-    } else {
-      periodInfo = null;
-    }
-
-    return res.json({
-      metrics: {
-        activeStudents: activeStudents || 0,
-        sectionsCount: sectionsCount || 0,
-        teachersCount: teachersCount || 0,
-        enrollmentsToday: enrollmentsToday || 0
-      },
-      recentActivity,
-      serverStatus: {
-        cpuLoad,
-        uptime: uptimeString
-      },
-      pendingTasks: {
-        preRegistrations: pendingPreRegistrations || 0,
-        sectionsWithoutTeacher: sectionsWithoutTeacher || 0,
-        gradesConfirmations: pendingGradesConfirmations || 0
-      },
-      periodInfo
-    });
+    );
+    res.json(data);
   } catch (error) {
     return next(error);
   }
@@ -178,7 +146,12 @@ exports.getTeacherDashboard = async (req, res, next) => {
   try {
     const userId = req.auth.sub;
 
-    // Find teacher
+    const data = await cacheService.remember(
+      `dashboard:teacher:${userId}`,
+      120,
+      ['sections', 'teachers', 'grades'],
+      async () => {
+        // Find teacher
     const teacher = await Teacher.findOne({
       where: { id_user: userId },
       include: [{ model: User }]
@@ -274,15 +247,18 @@ exports.getTeacherDashboard = async (req, res, next) => {
     const pendingGrades = assignments.filter(a => a.actStatus === 'abierta').length;
     const historyCount = assignments.filter(a => a.actStatus === 'cerrada').length;
 
-    return res.json({
-      metrics: {
-        activeSubjects: activeSubjects,
-        pendingGrades: pendingGrades,
-        historyCount: historyCount
-      },
-      assignments: assignments,
-      history: []
-    });
+        return {
+          metrics: {
+            activeSubjects,
+            pendingGrades,
+            historyCount
+          },
+          assignments,
+          history: []
+        };
+      }
+    );
+    res.json(data);
   } catch (error) {
     return next(error);
   }
@@ -293,127 +269,112 @@ exports.getStudentDashboard = async (req, res, next) => {
   try {
     const userId = req.auth.sub;
 
-    // Find student
-    const student = await Student.findOne({
-      where: { id_user: userId },
-      include: [
-        { model: User },
-        { model: Career }
-      ]
-    });
+    const data = await cacheService.remember(
+      `dashboard:student:${userId}`,
+      120,
+      ['students', 'registrations', 'grades', 'periods'],
+      async () => {
+        const student = await Student.findOne({
+          where: { id_user: userId },
+          include: [{ model: User }, { model: Career }]
+        });
 
-    if (!student) {
-      const user = await User.findByPk(userId);
-      // Graceful fallback for demo student data
-      const activePeriod = await AcademicPeriod.findOne({
-        where: { period_status: 'Activo' }
-      });
-      const currentPeriod = activePeriod ? activePeriod.name_period : '2026-II';
-
-      return res.json({
-        profile: {
-          name: user?.first_name || 'Ana',
-          lastname: user?.first_lastname || 'García',
-          career: 'Informática',
-          faculty: 'Facultad de Ingeniería',
-          director: 'Dra. Helena Pirela',
-          cum: 0.0,
-          creditsRequired: 160,
-          academicStatus: 'Regular',
-          currentPeriod
-        },
-        enrolled: [],
-        metrics: {
-          creditsPassed: 0
-        }
-      });
-    }
-
-    // Get registration details (academic history & current enrollment)
-    const registrations = await Registration.findAll({
-      where: { id_student: student.id_student },
-      include: [{
-        model: RegistrationDetail,
-        include: [{
-          model: Section,
-          include: [
-            { model: Subject },
-            { model: Teacher, include: [{ model: User }] },
-            { model: AcademicPeriod }
-          ]
-        }]
-      }]
-    });
-
-    let totalGrades = 0;
-    let gradesCount = 0;
-    let totalCreditsPassed = 0;
-    const enrolledClasses = [];
-
-    registrations.forEach(reg => {
-      reg.RegistrationDetails.forEach(detail => {
-        // Average calculation (CUM) - using final note
-        if (detail.final_note !== null && detail.final_note !== undefined) {
-          totalGrades += Number(detail.final_note);
-          gradesCount++;
-
-          // Check if approved (Venezuelan scale passes at 10)
-          if (Number(detail.final_note) >= 10 && detail.Section?.Subject?.credit_units) {
-            totalCreditsPassed += detail.Section.Subject.credit_units;
-          }
+        if (!student) {
+          const user = await User.findByPk(userId);
+          const activePeriod = await AcademicPeriod.findOne({ where: { period_status: 'Activo' } });
+          const currentPeriod = activePeriod ? activePeriod.name_period : '2026-II';
+          return {
+            profile: {
+              name: user?.first_name || 'Ana',
+              lastname: user?.first_lastname || 'García',
+              career: 'Informática',
+              faculty: 'Facultad de Ingeniería',
+              director: 'Dra. Helena Pirela',
+              cum: 0.0,
+              creditsRequired: 160,
+              academicStatus: 'Regular',
+              currentPeriod
+            },
+            enrolled: [],
+            metrics: { creditsPassed: 0 }
+          };
         }
 
-        // Active classes in the current active period
-        if (reg.status === 'Inscrito' && detail.Section) {
-          enrolledClasses.push({
-            code: detail.Section.Subject?.code_subject || 'N/A',
-            credits: detail.Section.Subject?.credit_units || 0,
-            name: detail.Section.Subject?.name_subject || 'Asignatura',
-            sectionCode: detail.Section.section_code,
-            classroom: detail.Section.classroom || 'Aula asignada',
-            teacher: detail.Section.Teacher?.User 
-              ? `${detail.Section.Teacher.User.first_name} ${detail.Section.Teacher.User.first_lastname}`
-              : 'Docente no asignado',
-            schedule: detail.Section.schedule_info || 'Por definir'
+        const registrations = await Registration.findAll({
+          where: { id_student: student.id_student },
+          include: [{
+            model: RegistrationDetail,
+            include: [{
+              model: Section,
+              include: [
+                { model: Subject },
+                { model: Teacher, include: [{ model: User }] },
+                { model: AcademicPeriod }
+              ]
+            }]
+          }]
+        });
+
+        let totalGrades = 0;
+        let gradesCount = 0;
+        let totalCreditsPassed = 0;
+        const enrolledClasses = [];
+
+        registrations.forEach(reg => {
+          reg.RegistrationDetails.forEach(detail => {
+            if (detail.final_note !== null && detail.final_note !== undefined) {
+              totalGrades += Number(detail.final_note);
+              gradesCount++;
+              if (Number(detail.final_note) >= 10 && detail.Section?.Subject?.credit_units) {
+                totalCreditsPassed += detail.Section.Subject.credit_units;
+              }
+            }
+            if (reg.status === 'Inscrito' && detail.Section) {
+              enrolledClasses.push({
+                code: detail.Section.Subject?.code_subject || 'N/A',
+                credits: detail.Section.Subject?.credit_units || 0,
+                name: detail.Section.Subject?.name_subject || 'Asignatura',
+                sectionCode: detail.Section.section_code,
+                classroom: detail.Section.classroom || 'Aula asignada',
+                teacher: detail.Section.Teacher?.User
+                  ? `${detail.Section.Teacher.User.first_name} ${detail.Section.Teacher.User.first_lastname}`
+                  : 'Docente no asignado',
+                schedule: detail.Section.schedule_info || 'Por definir'
+              });
+            }
           });
+        });
+
+        const calculatedCum = gradesCount > 0 ? (totalGrades / gradesCount) : 0.0;
+        const activePeriod = await AcademicPeriod.findOne({ where: { period_status: 'Activo' } });
+        const currentPeriod = activePeriod ? activePeriod.name_period : '2026-II';
+
+        let faculty = 'Facultad de Ingeniería y Sistemas';
+        let director = 'Dra. María Helena Pirela';
+        const careerName = student.Career?.name_career || 'Informática';
+        if (careerName.toLowerCase().includes('administración') || careerName.toLowerCase().includes('contaduría')) {
+          faculty = 'Facultad de Ciencias Administrativas';
+          director = 'Dr. Juan Carlos Ramos';
         }
-      });
-    });
 
-    const calculatedCum = gradesCount > 0 ? (totalGrades / gradesCount) : 0.0;
-
-    const activePeriod = await AcademicPeriod.findOne({
-      where: { period_status: 'Activo' }
-    });
-    const currentPeriod = activePeriod ? activePeriod.name_period : '2026-II';
-
-    // Map career to appropriate Faculty and Director
-    let faculty = 'Facultad de Ingeniería y Sistemas';
-    let director = 'Dra. María Helena Pirela';
-    const careerName = student.Career?.name_career || 'Informática';
-
-    if (careerName.toLowerCase().includes('administración') || careerName.toLowerCase().includes('contaduría')) {
-      faculty = 'Facultad de Ciencias Administrativas';
-      director = 'Dr. Juan Carlos Ramos';
-    }
-
-    return res.json({
-      profile: {
-        name: student.User?.first_name || 'Estudiante',
-        lastname: student.User?.first_lastname || 'Upty',
-        career: careerName,
-        faculty,
-        director,
-        cum: Number(calculatedCum.toFixed(2)),
-        creditsRequired: 160,
-        academicStatus: student.status || 'Regular',
-        currentPeriod
-      },
-      enrolled: enrolledClasses,
-      metrics: {
-        creditsPassed: totalCreditsPassed
+        return {
+          profile: {
+            name: student.User?.first_name || 'Estudiante',
+            lastname: student.User?.first_lastname || 'Upty',
+            career: careerName,
+            faculty,
+            director,
+            cum: Number(calculatedCum.toFixed(2)),
+            creditsRequired: 160,
+            academicStatus: student.status || 'Regular',
+            currentPeriod
+          },
+          enrolled: enrolledClasses,
+          metrics: { creditsPassed: totalCreditsPassed }
+        };
       }
-    });
+    );
+    res.json(data);
   } catch (error) {
     return next(error);
   }

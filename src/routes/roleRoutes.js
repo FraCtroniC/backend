@@ -4,9 +4,10 @@ const ctrl = require('../controllers/roleController');
 const { validateZod } = require('../middlewares/validateZod');
 const { numericIdParam } = require('../validators/commonSchemas');
 const { roleCreateSchema, roleUpdateSchema } = require('../validators/domainSchemas');
+const { cacheResponse } = require('../middlewares/cacheMiddleware');
 
-router.get('/', ctrl.list);
-router.get('/:id', validateZod({ params: numericIdParam }), ctrl.get);
+router.get('/', cacheResponse(600, 'roles'), ctrl.list);
+router.get('/:id', validateZod({ params: numericIdParam }), cacheResponse(600, 'roles'), ctrl.get);
 
 router.post('/', validateZod({ body: roleCreateSchema }), ctrl.create);
 
