@@ -16,6 +16,9 @@ exports.list = async (req, res, next) => {
     if (req.query.id_period) {
       where.id_period = parseInt(req.query.id_period);
     }
+    if (req.query.id_student) {
+      where.id_student = parseInt(req.query.id_student);
+    }
 
     const { count, rows } = await Registration.findAndCountAll({ 
       where,
@@ -37,7 +40,7 @@ exports.list = async (req, res, next) => {
             {
               model: require('../models').Section,
               include: [
-                { model: require('../models').Subject, attributes: ['id_subject', 'name_subject', 'credit_units'] }
+                { model: require('../models').Subject, attributes: ['id_subject', 'name_subject', 'code_subject', 'credit_units'] }
               ]
             }
           ]
@@ -156,6 +159,11 @@ exports.remove = async (req, res, next) => {
       return res.status(400).json({ message: periodCheck.message });
     }
     
+    // Limpiar detalles de inscripción asociados para evitar error de clave foránea
+    await require('../models').RegistrationDetail.destroy({
+      where: { id_registration: registration.id_registration }
+    });
+
     await registration.destroy();
 
     await logActivity(req, {

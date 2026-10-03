@@ -60,6 +60,28 @@ exports.create = async (req, res, next) => {
       schedule_info 
     } = req.body;
     
+    if (id_teacher && schedule_info && id_period) {
+      const teacherConflict = await Section.findOne({
+        where: { id_teacher, schedule_info, id_period }
+      });
+      if (teacherConflict) {
+        return res.status(409).json({ message: 'El docente ya tiene asignada otra sección en el mismo horario y día.' });
+      }
+    }
+
+    if (classroom && schedule_info && id_period) {
+      const classroomConflict = await Section.findOne({
+        where: { classroom, schedule_info, id_period },
+        include: [{ model: Subject, attributes: ['name_subject'] }]
+      });
+      if (classroomConflict) {
+        const subj = classroomConflict.Subject?.name_subject || 'otra asignatura';
+        return res.status(409).json({
+          message: `El aula "${classroom}" ya está ocupada en este mismo horario (${schedule_info}) por la sección ${classroomConflict.section_code} de ${subj}.`
+        });
+      }
+    }
+
     const newSection = await Section.create({ 
       id_period, 
       id_subject, 
@@ -136,6 +158,24 @@ exports.update = async (req, res, next) => {
       });
       if (conflict) {
         return res.status(409).json({ message: 'El docente ya tiene asignada otra sección en el mismo horario y día.' });
+      }
+    }
+
+    if (classroom && schedule_info) {
+      const classroomConflict = await Section.findOne({
+        where: {
+          classroom,
+          schedule_info,
+          id_period: id_period || section.id_period,
+          id_section: { [require('sequelize').Op.ne]: section.id_section }
+        },
+        include: [{ model: Subject, attributes: ['name_subject'] }]
+      });
+      if (classroomConflict) {
+        const subj = classroomConflict.Subject?.name_subject || 'otra asignatura';
+        return res.status(409).json({
+          message: `El aula "${classroom}" ya está ocupada en este mismo horario (${schedule_info}) por la sección ${classroomConflict.section_code} de ${subj}.`
+        });
       }
     }
 

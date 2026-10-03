@@ -73,6 +73,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM('Activo', 'Inactivo', 'Bloqueado'),
       allowNull: true,
     },
+    permissions: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+    },
   }, {
     tableName: 'user_account',
     timestamps: false,

@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true
     },
     name_role: {
-      type: DataTypes.ENUM('Admin', 'Docente', 'Estudiante'),
+      type: DataTypes.ENUM('Admin', 'Docente', 'Estudiante', 'Control de Estudios', 'Gestión Académica'),
       allowNull: false,
       unique: true // IMPORTANTE: No quieres dos roles que se llamen igual
     },

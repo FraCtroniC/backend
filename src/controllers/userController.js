@@ -26,6 +26,10 @@ function toSafeUser(userInstance) {
   
   if (user.Student) {
     user.career = user.Student.Career?.name_career || '';
+    user.id_student = user.Student.id_student;
+    user.id_career = user.Student.id_career;
+    user.id_semester = user.Student.id_semester;
+    user.academicStatus = user.Student.status || 'Regular';
     user.cum = 0.0;
   }
   
@@ -35,9 +39,10 @@ function toSafeUser(userInstance) {
     user.expertise = user.Teacher.profession || 'Pendiente de asignación';
   }
 
+  user.permissions = user.permissions || null;
+
   //delete user.password_hash;
   return user;
-
 }
 
 // 1. Listar usuarios con paginación y filtros
@@ -76,11 +81,14 @@ exports.list = async (req, res, next) => {
       ];
     }
 
-    // Role filtering mapping: students=3, teachers=2, admins=1
+    // Role filtering mapping: students=3, teachers=2, admins=1, control_estudios=4, gestion_academica=5
     if (role) {
       if (role === 'students') where.id_role = 3;
       else if (role === 'teachers') where.id_role = 2;
       else if (role === 'admins') where.id_role = 1;
+      else if (role === 'control_estudios' || role === 'control-estudios') where.id_role = 4;
+      else if (role === 'gestion_academica' || role === 'gestion-academica') where.id_role = 5;
+      else if (!isNaN(Number(role))) where.id_role = Number(role);
     }
 
     const { count, rows } = await User.findAndCountAll({
@@ -177,6 +185,7 @@ exports.create = async (req, res, next) => {
       academic_grade,
       profession,
       id_academic_title,
+      permissions,
     } = req.body;
 
 
@@ -192,7 +201,8 @@ exports.create = async (req, res, next) => {
       email, 
       phone,
       date_birth,
-      status 
+      status,
+      permissions: permissions || null
     }, { transaction: t });
 
     // Determine role name
@@ -323,6 +333,7 @@ exports.update = async (req, res, next) => {
       academic_grade,
       profession,
       id_academic_title,
+      permissions,
     } = req.body;
 
 
@@ -332,10 +343,9 @@ exports.update = async (req, res, next) => {
       finalPasswordHash = hashPassword(password);
     }
 
-    await user.update({ 
+    const updateFields = {
       id_role, 
       username, 
-      password_hash: finalPasswordHash,
       first_name,
       second_name,
       first_lastname,
@@ -344,7 +354,17 @@ exports.update = async (req, res, next) => {
       phone,
       date_birth,
       status 
-    });
+    };
+
+    if (finalPasswordHash) {
+      updateFields.password_hash = finalPasswordHash;
+    }
+
+    if (permissions !== undefined) {
+      updateFields.permissions = permissions;
+    }
+
+    await user.update(updateFields);
 
     // Update associated Student record (career) if applicable
     if (career) {
@@ -452,3 +472,11 @@ exports.remove = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getPermissionsCatalog = async (req, res) => {
+  const { MODULE_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS } = require('../constants/permissions');
+  res.json({
+    modules: MODULE_PERMISSIONS,
+    defaultRolePermissions: DEFAULT_ROLE_PERMISSIONS
+  });
+};

@@ -20,6 +20,10 @@ function toSafeUser(userInstance) {
 
   if (user.Student) {
     user.career = user.Student.Career?.name_career || '';
+    user.id_student = user.Student.id_student;
+    user.id_career = user.Student.id_career;
+    user.id_semester = user.Student.id_semester;
+    user.academicStatus = user.Student.status || 'Regular';
     user.cum = 0.0;
   }
 
@@ -29,6 +33,7 @@ function toSafeUser(userInstance) {
     user.expertise = user.Teacher.profession || 'Pendiente de asignación';
   }
 
+  user.permissions = user.permissions || null;
 
   delete user.password_hash;
   return user;
@@ -118,6 +123,7 @@ async function register(req, res, next) {
       academic_grade,
       profession,
       id_academic_title,
+      permissions,
     } = req.body;
 
     const finalPassword = password || (() => {
@@ -156,6 +162,7 @@ async function register(req, res, next) {
       phone,
       date_birth,
       status: status || 'Activo',
+      permissions: permissions || null,
     }, { transaction: t });
 
     // Determine role name
@@ -376,6 +383,7 @@ async function profile(req, res, next) {
         'id_role',
         'document_id',
         'date_birth',
+        'permissions',
       ],
       include: [
         {
@@ -439,7 +447,7 @@ async function profile(req, res, next) {
       career: data.Student?.Career?.name_career ?? (data.Role?.name_role === 'Estudiante' ? 'Informática' : ''),
       academic_title: data.Teacher?.AcademicTitle?.name_title ?? data.Teacher?.academic_grade ?? '',
       expertise: data.Teacher?.profession ?? '',
-
+      permissions: data.permissions || null,
       document_id: data.document_id,
       date_birth: data.date_birth,
       cum: calculatedCum,

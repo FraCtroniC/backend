@@ -23,6 +23,7 @@ const PreRegistration = require('./pre_registration')(sequelize, Sequelize.DataT
 const PreDocument = require('./pre_document')(sequelize, Sequelize.DataTypes);
 const Notification = require('./notification')(sequelize, Sequelize.DataTypes);
 const AcademicTitle = require('./academic_title')(sequelize, Sequelize.DataTypes);
+const Classroom = require('./classroom')(sequelize, Sequelize.DataTypes);
 
 // Associations (basic examples)
 Role.hasMany(User, { foreignKey: 'id_role' });
@@ -138,4 +139,5 @@ module.exports = {
   PreDocument,
   Notification,
   AcademicTitle,
+  Classroom,
 };

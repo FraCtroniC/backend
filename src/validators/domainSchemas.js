@@ -18,7 +18,7 @@ const subjectStatusSchema = z.enum(['Cursando', 'Aprobado', 'Reprobado', 'Retira
 const enrollmentStatusSchema = z.enum(['Planificacion', 'Activo', 'Culminado', 'Cerrada', 'Abierta', 'Modificaciones']);
 const periodStatusSchema = z.enum(['Cerrada', 'Abierta', 'Modificaciones', 'Planificacion', 'Activo', 'Culminado']);
 const documentRequestStatusSchema = z.enum(['Emitido', 'Anulado']);
-const roleNameSchema = z.enum(['Admin', 'Docente', 'Estudiante']);
+const roleNameSchema = z.enum(['Admin', 'Docente', 'Estudiante', 'Control de Estudios', 'Gestión Académica']);
 
 function mapLegacyNameFields(value) {
   const mapped = { ...value };
@@ -58,7 +58,7 @@ const userCreateSchema = z
     academic_grade: z.string().optional().nullable(),
     profession: z.string().optional().nullable(),
     id_academic_title: z.coerce.number().int().positive().optional().nullable(),
-
+    permissions: z.array(z.string()).optional().nullable(),
   })
   .strict()
   .transform(mapLegacyNameFields)
@@ -95,7 +95,7 @@ const userUpdateSchema = z
     academic_grade: z.string().trim().optional(),
     profession: z.string().trim().optional(),
     id_academic_title: z.coerce.number().int().positive().optional().nullable(),
-
+    permissions: z.array(z.string()).optional().nullable(),
   })
   .strict()
   .transform(mapLegacyNameFields)
@@ -242,7 +242,7 @@ const authRegisterSchema = z
     academic_grade: z.string().optional().nullable(),
     profession: z.string().optional().nullable(),
     id_academic_title: z.coerce.number().int().positive().optional().nullable(),
-
+    permissions: z.array(z.string()).optional().nullable(),
   })
   .strict()
   .transform(mapLegacyNameFields)

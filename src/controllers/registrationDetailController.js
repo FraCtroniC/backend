@@ -7,7 +7,42 @@ const cacheService = require('../services/cacheService');
 // 1. Listar todos los detalles de inscripción (Notas)
 exports.list = async (req, res, next) => {
   try {
-    const items = await RegistrationDetail.findAll();
+    const where = {};
+    if (req.query.id_section) where.id_section = req.query.id_section;
+    if (req.query.id_registration) where.id_registration = req.query.id_registration;
+
+    const items = await RegistrationDetail.findAll({
+      where,
+      include: [
+        {
+          model: Section,
+          include: [
+            {
+              model: Subject,
+              attributes: ['id_subject', 'name_subject', 'code_subject', 'credit_units']
+            },
+            {
+              model: AcademicPeriod,
+              attributes: ['id_period', 'name_period', 'period_status']
+            }
+          ]
+        },
+        {
+          model: Registration,
+          include: [
+            {
+              model: Student,
+              include: [
+                {
+                  model: User,
+                  attributes: ['id_user', 'first_name', 'first_lastname', 'document_id', 'email']
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
     res.json(items);
   } catch (err) { 
     next(err); 
@@ -17,7 +52,37 @@ exports.list = async (req, res, next) => {
 // 2. Obtener nota por ID de detalle
 exports.get = async (req, res, next) => {
   try {
-    const item = await RegistrationDetail.findByPk(req.params.id);
+    const item = await RegistrationDetail.findByPk(req.params.id, {
+      include: [
+        {
+          model: Section,
+          include: [
+            {
+              model: Subject,
+              attributes: ['id_subject', 'name_subject', 'code_subject', 'credit_units']
+            },
+            {
+              model: AcademicPeriod,
+              attributes: ['id_period', 'name_period', 'period_status']
+            }
+          ]
+        },
+        {
+          model: Registration,
+          include: [
+            {
+              model: Student,
+              include: [
+                {
+                  model: User,
+                  attributes: ['id_user', 'first_name', 'first_lastname', 'document_id', 'email']
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
     if (!item) {
       return res.status(404).json({ message: 'Detalle no encontrado' });
     }
@@ -67,7 +132,8 @@ exports.create = async (req, res, next) => {
     });
 
     try {
-      const populated = await RegistrationDetail.findByPk(newItem.id_registration_detail || newItem.id, {
+      const detailPk = newItem.id_detail || newItem.id_registration_detail || newItem.id;
+      const populated = await RegistrationDetail.findByPk(detailPk, {
         include: [
           {
             model: Section,
@@ -129,7 +195,8 @@ exports.update = async (req, res, next) => {
     await item.update(req.body);
 
     try {
-      const populated = await RegistrationDetail.findByPk(item.id_registration_detail || item.id, {
+      const detailPk = item.id_detail || item.id_registration_detail || item.id;
+      const populated = await RegistrationDetail.findByPk(detailPk, {
         include: [
           {
             model: Section,

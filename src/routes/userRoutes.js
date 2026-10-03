@@ -14,6 +14,8 @@ router.post(
   userController.create
 );
 
+router.get('/permissions-catalog', userController.getPermissionsCatalog);
+
 router.get('/:id', validateZod({ params: uuidIdParam }), cacheResponse(300, 'users'), userController.get);
 router.put('/:id', validateZod({ params: uuidIdParam, body: userUpdateSchema }), userController.update);
 router.delete('/:id', validateZod({ params: uuidIdParam }), userController.remove);

@@ -4,6 +4,7 @@ const app = require(path.join(__dirname, 'app'));
 const socket = require(path.join(__dirname, 'socket'));
 const config = require(path.join(__dirname, 'config', 'env'));
 const { testConnection } = require(path.join(__dirname, 'config', 'database'));
+// Reload trigger: 2026-09-29 16:40
 const { connectRedis } = require(path.join(__dirname, 'config', 'redis'));
 
 const port = config.port || 3000;

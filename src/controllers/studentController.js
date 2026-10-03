@@ -1,12 +1,29 @@
 /** Controlador REST de estudiantes. */
-const { Student } = require('../models');
+const { Student, User, Career, Semester } = require('../models');
 const cacheService = require('../services/cacheService');
+
+const studentAssociations = [
+  {
+    model: User,
+    attributes: ['id_user', 'first_name', 'second_name', 'first_lastname', 'second_lastname', 'document_id', 'email', 'status']
+  },
+  {
+    model: Career,
+    attributes: ['id_career', 'name_career', 'code_career']
+  },
+  {
+    model: Semester,
+    attributes: ['id_semester', 'number_semester', 'name_semester']
+  }
+];
 
 // 1. Listar todos los estudiantes
 exports.list = async (req, res, next) => {
   try {
-    // Los listamos por fecha de admisión, lo más nuevo primero
-    const students = await Student.findAll({ order: [['admission_date', 'DESC']] });
+    const students = await Student.findAll({ 
+      order: [['admission_date', 'DESC']],
+      include: studentAssociations
+    });
     res.json(students);
   } catch (err) { 
     next(err); 
@@ -16,7 +33,9 @@ exports.list = async (req, res, next) => {
 // 2. Obtener un estudiante por ID (id_student)
 exports.get = async (req, res, next) => {
   try {
-    const student = await Student.findByPk(req.params.id);
+    const student = await Student.findByPk(req.params.id, {
+      include: studentAssociations
+    });
     if (!student) {
       return res.status(404).json({ message: 'Estudiante no encontrado' });
     }
