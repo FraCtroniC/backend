@@ -1,65 +1,73 @@
-/** Modelo Sequelize de secciones. */
+/** Modelo Sequelize de secciones (Mapeado a tt_secci). */
 module.exports = (sequelize, DataTypes) => {
   const Section = sequelize.define('Section', {
     id_section: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true
+      autoIncrement: true,
+      field: 'secci_id',
     },
     id_period: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'perio_id',
       references: {
-        model: 'academic_period', // Asegúrate que coincida con el nombre de tu tabla de periodos
-        key: 'id_period'
+        model: 'tm_perio',
+        key: 'perio_id'
       }
     },
     id_subject: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'subje_id',
       references: {
-        model: 'subject',
-        key: 'id_subject'
+        model: 'tm_subje',
+        key: 'subje_id'
       }
     },
     id_teacher: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      field: 'teach_id',
       references: {
-        model: 'teacher',
-        key: 'id_teacher'
+        model: 'tm_teach',
+        key: 'teach_id'
       }
     },
     section_code: {
       type: DataTypes.STRING(10),
-      allowNull: false
-      // Podrías añadir un index o unique compuesto con id_period e id_subject
+      allowNull: false,
+      field: 'secci_cd',
     },
     quota_max: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'secci_qm',
       validate: {
-        min: 1 // No tiene sentido una sección con 0 cupos
+        min: 1
       }
     },
     classroom: {
       type: DataTypes.STRING(50),
-      allowNull: true // Puede ser nulo si es una sección virtual o aún no asignada
+      allowNull: true,
+      field: 'secci_cr',
     },
     schedule_info: {
       type: DataTypes.STRING(100),
-      allowNull: true
+      allowNull: true,
+      field: 'secci_ho',
     },
     id_career: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'caree_id',
       references: {
-        model: 'career',
-        key: 'id_career'
+        model: 'tm_caree',
+        key: 'caree_id'
       }
     },
   }, {
-    tableName: 'section',
+    tableName: 'tt_secci',
     timestamps: false,
   });
 

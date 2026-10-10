@@ -1,46 +1,51 @@
-/** Modelo Sequelize de materias por pensum. */
+/** Modelo Sequelize de materias por pensum (Mapeado a tt_pesub). */
 module.exports = (sequelize, DataTypes) => {
   const PensumSubject = sequelize.define('PensumSubject', {
     id_pensum_subject: { 
       type: DataTypes.INTEGER, 
       primaryKey: true, 
-      autoIncrement: true 
+      autoIncrement: true,
+      field: 'pesub_id',
     },
     id_pensum: { 
       type: DataTypes.INTEGER, 
       allowNull: false,
+      field: 'pensu_id',
       references: {
-        model: 'pensum',
-        key: 'id_pensum'
+        model: 'tm_pensu',
+        key: 'pensu_id'
       }
     },
     id_subject: { 
       type: DataTypes.INTEGER, 
       allowNull: false,
+      field: 'subje_id',
       references: {
-        model: 'subject',
-        key: 'id_subject'
+        model: 'tm_subje',
+        key: 'subje_id'
       }
     },
-    id_semester: {
+    id_semester: { 
       type: DataTypes.INTEGER, 
       allowNull: false,
+      field: 'pesub_sm',
       references: {
-        model: 'semester',
-        key: 'id_semester'
+        model: 'tm_semes',
+        key: 'semes_id'
       }
     },
-    code_subject: {
-      type: DataTypes.STRING(20),
+    code_subject: { 
+      type: DataTypes.STRING(20), 
       allowNull: false,
+      field: 'pesub_cd',
     },
   }, {
-    tableName: 'pensum_subject',
+    tableName: 'tt_pesub',
     timestamps: false,
     indexes: [
       {
         unique: true,
-        fields: ['id_pensum', 'code_subject']
+        fields: ['pensu_id', 'pesub_cd']
       }
     ]
   });

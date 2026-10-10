@@ -1,45 +1,51 @@
-/** Modelo Sequelize de estudiantes. */
+/** Modelo Sequelize de estudiantes (Mapeado a tm_stude). */
 module.exports = (sequelize, DataTypes) => {
   const Student = sequelize.define('Student', {
     id_student: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true
+      autoIncrement: true,
+      field: 'stude_id',
     },
     id_user: {
       type: DataTypes.UUID,
       allowNull: false,
-      unique: true, // UN estudiante solo puede tener UNA cuenta de usuario vinculada
+      unique: true,
+      field: 'users_id',
       references: {
-        model: 'user_account',
-        key: 'id_user'
+        model: 'tm_users',
+        key: 'users_id'
       }
     },
     id_career: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'caree_id',
       references: {
-        model: 'career', // Ajusta si el nombre de tu tabla de carreras es distinto
-        key: 'id_career'
+        model: 'tm_caree',
+        key: 'caree_id'
       }
     },
     id_semester: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 1,
+      field: 'semes_id',
     },
     status: {
       type: DataTypes.ENUM('Regular', 'Retirado', 'Egresado', 'Suspendido'),
       allowNull: false,
-      defaultValue: 'Regular'
+      defaultValue: 'Regular',
+      field: 'stude_st',
     },
     admission_date: {
       type: DataTypes.DATEONLY,
       allowNull: false,
-      defaultValue: DataTypes.NOW // Si no se manda, toma la fecha actual
+      defaultValue: DataTypes.NOW,
+      field: 'stude_dt',
     },
   }, {
-    tableName: 'student',
+    tableName: 'tm_stude',
     timestamps: false,
   });
 

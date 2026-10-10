@@ -1,39 +1,42 @@
-/** Modelo Sequelize de docentes. */
+/** Modelo Sequelize de docentes (Mapeado a tm_teach). */
 module.exports = (sequelize, DataTypes) => {
   const Teacher = sequelize.define('Teacher', {
     id_teacher: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true
+      autoIncrement: true,
+      field: 'teach_id',
     },
     id_user: {
       type: DataTypes.UUID,
       allowNull: false,
-      // Es buena práctica añadir la referencia explícita si no usas un archivo de asociaciones
+      field: 'users_id',
       references: {
-        model: 'user_account',
-        key: 'id_user'
+        model: 'tm_users',
+        key: 'users_id'
       }
     },
     academic_grade: {
-      type: DataTypes.STRING(20),
-      allowNull: true
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      field: 'teach_gr',
     },
     id_academic_title: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      field: 'title_id',
       references: {
-        model: 'academic_title',
-        key: 'id_academic_title'
+        model: 'tm_title',
+        key: 'title_id'
       }
     },
-
     profession: {
       type: DataTypes.STRING(100),
-      allowNull: true
+      allowNull: true,
+      field: 'teach_pr',
     },
   }, {
-    tableName: 'teacher',
+    tableName: 'tm_teach',
     timestamps: false,
   });
 

@@ -1,33 +1,35 @@
-/** Modelo Sequelize de prerrequisitos de materias. */
+/** Modelo Sequelize de prerrequisitos de materias (Mapeado a tt_subpr). */
 module.exports = (sequelize, DataTypes) => {
   const SubjectPrerequisite = sequelize.define('SubjectPrerequisite', {
     id_prerequisite: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true
+      autoIncrement: true,
+      field: 'subpr_id',
     },
     // La materia que quieres cursar
     id_pensum_subject: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'pesub_id',
       references: {
-        model: 'pensum_subject', // Asegúrate que este sea el nombre real de tu tabla de pensum
-        key: 'id_pensum_subject'
+        model: 'tt_pesub',
+        key: 'pesub_id'
       }
     },
     // La materia que debes haber aprobado antes
     id_required_pensum_subject: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'reqsu_id',
       references: {
-        model: 'pensum_subject',
-        key: 'id_pensum_subject'
+        model: 'tt_pesub',
+        key: 'pesub_id'
       }
     },
   }, {
-    tableName: 'subject_prerequisite',
+    tableName: 'tt_subpr',
     timestamps: false,
-    // Validación de nivel de tabla para evitar que una materia sea su propio prerrequisito
     validate: {
       noSelfPrerequisite() {
         if (this.id_pensum_subject === this.id_required_pensum_subject) {

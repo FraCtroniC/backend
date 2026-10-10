@@ -379,7 +379,7 @@ const sectionUpdateSchema = sectionCreateSchema
 const teacherCreateSchema = z
   .object({
     id_user: uuid,
-    academic_grade: z.string().trim().max(20).optional(),
+    academic_grade: z.string().trim().max(100).optional(),
     profession: z.string().trim().max(100).optional(),
     id_academic_title: z.coerce.number().int().positive().optional().nullable(),
   })
@@ -388,7 +388,7 @@ const teacherCreateSchema = z
 
 const teacherUpdateSchema = z
   .object({
-    academic_grade: z.string().trim().max(20).optional(),
+    academic_grade: z.string().trim().max(100).optional(),
     profession: z.string().trim().max(100).optional(),
     id_academic_title: z.coerce.number().int().positive().optional().nullable(),
   })
